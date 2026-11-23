@@ -106,6 +106,15 @@ Zod schemas validate inputs and serialized responses and generate OpenAPI. Never
 
 Small formatting and dependency-only changes may skip a specification delta only when the OpenSpec change explicitly declares that no behavior changed.
 
+## Branches
+
+Branch off `develop` and open the pull request against it. Name the branch after the task code, followed by a short kebab-case description:
+
+```text
+S<sprint>-<task>-<short-description>
+S1-03-cliente-erp
+```
+
 ## Technical documentation
 
 `docs/changes/` preserves the implementation record for each archived change:
