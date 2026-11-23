@@ -21,6 +21,28 @@ Authentication, Redis, object storage, email, queues, and vendor-specific deploy
 - pnpm 12 or later (enable it with `corepack enable`)
 - Docker for PostgreSQL integration and container tests
 
+## Run locally
+
+After cloning this repository, do not run `pnpm init:project`: it removes the example module and is meant only for a repository freshly created from the template.
+
+To run the API and PostgreSQL in containers:
+
+```bash
+docker compose up
+```
+
+To work on the API with watch mode, run only PostgreSQL in a container:
+
+```bash
+pnpm install --frozen-lockfile
+cp .env.example .env
+docker compose up -d postgres
+pnpm db:migrate
+pnpm dev
+```
+
+Either way the API listens on [http://localhost:3001](http://localhost:3001) and PostgreSQL on port 5432. Stop any other project using these ports first. `GET /health/ready` returns `{"status":"ready"}` once the API reaches the database. The web app is not part of Compose; start it from its own repository with `pnpm dev`.
+
 ## Start a project
 
 After creating a repository from this template:
