@@ -106,6 +106,10 @@ Zod schemas validate inputs and serialized responses and generate OpenAPI. Never
 
 Small formatting and dependency-only changes may skip a specification delta only when the OpenSpec change explicitly declares that no behavior changed.
 
+## Branches
+
+The integration branch is `develop`. See [CONTRIBUTING.md](CONTRIBUTING.md#branches-and-pull-requests) for the branch naming convention.
+
 ## Technical documentation
 
 `docs/changes/` preserves the implementation record for each archived change:
