@@ -14,6 +14,17 @@ install reports ignored build scripts, decide case by case with
 `pnpm approve-builds` and leave a comment saying why each one is allowed or
 denied.
 
+## Branches and pull requests
+
+The integration branch is `develop`. Create a focused branch from `develop` and open the pull request against `develop`. Name the branch after the task code, followed by a short kebab-case description:
+
+```text
+S<sprint>-<task>-<short-description>
+S1-03-cliente-erp
+```
+
+Complete the pull request template: what the change does, a risk the author sees, how AI was used (required for level 3 and level 5 tasks), then the OpenSpec, TDD, impact, verification, and checklist sections.
+
 ## Change workflow
 
 The steps below are also available as agent skills, which run the same flow and

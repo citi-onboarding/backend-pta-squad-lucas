@@ -108,12 +108,7 @@ Small formatting and dependency-only changes may skip a specification delta only
 
 ## Branches
 
-Branch off `develop` and open the pull request against it. Name the branch after the task code, followed by a short kebab-case description:
-
-```text
-S<sprint>-<task>-<short-description>
-S1-03-cliente-erp
-```
+The integration branch is `develop`. See [CONTRIBUTING.md](CONTRIBUTING.md#branches-and-pull-requests) for the branch naming convention.
 
 ## Technical documentation
 
