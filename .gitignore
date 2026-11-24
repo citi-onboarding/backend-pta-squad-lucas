@@ -12,3 +12,8 @@ test-results/
 
 # generated mirror of .agents/skills/citi-* (see scripts/check-agent-skills.mjs)
 /.claude/skills/citi-*
+data/raw/
+data/.venv/
+data/notebooks/
+__pycache__/
+.pytest_cache/
