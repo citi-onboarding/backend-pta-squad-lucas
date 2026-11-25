@@ -8,5 +8,17 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/User.js'
+export type * from './models/Session.js'
+export type * from './models/Customer.js'
+export type * from './models/Product.js'
+export type * from './models/Receivable.js'
+export type * from './models/SyncRun.js'
+export type * from './models/Order.js'
+export type * from './models/OrderItem.js'
+export type * from './models/Contract.js'
+export type * from './models/HistoricalOrderItem.js'
+export type * from './models/HistoricalReceivable.js'
+export type * from './models/LoadIssue.js'
 export type * from './models/ExampleItem.js'
 export type * from './commonInputTypes.js'
