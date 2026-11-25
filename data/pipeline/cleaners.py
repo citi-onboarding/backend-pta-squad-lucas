@@ -158,14 +158,21 @@ def parse_date(value: object) -> date | None:
     return None
 
 
-def normalize_code(value: object, prefix: str | None = None) -> str | None:
-    """Trim and uppercase ERP codes (e.g. ' c0040 ' -> 'C0040')."""
+def normalize_code(
+    value: object, prefix: str | None = None, width: int | None = None
+) -> str | None:
+    """Trim, uppercase, and optionally zero-pad ERP codes (e.g. 'C077' -> 'C0077')."""
     if _is_null(value):
         return None
     text = str(value).strip().upper()
     if prefix is not None:
-        if not re.fullmatch(rf"{re.escape(prefix.upper())}\d+", text):
+        match = re.fullmatch(rf"({re.escape(prefix.upper())})(\d+)", text)
+        if not match:
             return None
+        pref, digits = match.group(1), match.group(2)
+        if width is not None:
+            digits = digits.zfill(width)
+        return f"{pref}{digits}"
     return text
 
 
@@ -299,6 +306,7 @@ def normalize_text_key(value: object) -> str | None:
     text = _strip_accents(str(value)).lower()
     text = re.sub(r"\bs\.?\s*a\.?\b", "sa", text)
     text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"(\d)\s+mm2\b", r"\1mm2", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text or None
 

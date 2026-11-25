@@ -76,7 +76,9 @@ class TestNormalizeCode:
     def test_normalizes_case_and_whitespace(self):
         assert normalize_code(" c0040 ", prefix="C") == "C0040"
         assert normalize_code("C0028", prefix="C") == "C0028"
-        assert normalize_code("p00005", prefix="P") == "P00005"
+        assert normalize_code("C077", prefix="C", width=4) == "C0077"
+        assert normalize_code("C120", prefix="C", width=4) == "C0120"
+        assert normalize_code("p00005", prefix="P", width=5) == "P00005"
 
     def test_non_code_text_returns_none_when_prefix_required(self):
         assert normalize_code("Construtora Timbaúba ME", prefix="C") is None
@@ -251,6 +253,9 @@ class TestMatchingAndNoise:
         )
         assert normalize_text_key("Instaladora Candeias LTDA ") == normalize_text_key(
             "Instaladora Candeias Ltda"
+        )
+        assert normalize_text_key("cabo flexível 35 mm2 1kv") == normalize_text_key(
+            "Cabo flexível 35mm² 1kV"
         )
 
     def test_resolve_unique_match_handles_single_zero_and_ambiguous(self):
