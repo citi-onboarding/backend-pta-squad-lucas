@@ -295,11 +295,10 @@ export type HistoricalReceivableOrderByWithRelationInput = {
 
 export type HistoricalReceivableWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  titleId_status?: Prisma.HistoricalReceivableTitleIdStatusCompoundUniqueInput
+  titleId?: number
   AND?: Prisma.HistoricalReceivableWhereInput | Prisma.HistoricalReceivableWhereInput[]
   OR?: Prisma.HistoricalReceivableWhereInput[]
   NOT?: Prisma.HistoricalReceivableWhereInput | Prisma.HistoricalReceivableWhereInput[]
-  titleId?: Prisma.IntFilter<"HistoricalReceivable"> | number
   customerCode?: Prisma.StringFilter<"HistoricalReceivable"> | string
   orderNumber?: Prisma.IntFilter<"HistoricalReceivable"> | number
   installment?: Prisma.StringFilter<"HistoricalReceivable"> | string
@@ -310,7 +309,7 @@ export type HistoricalReceivableWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumHistoricalReceivableStatusFilter<"HistoricalReceivable"> | $Enums.HistoricalReceivableStatus
   corrections?: Prisma.JsonNullableFilter<"HistoricalReceivable">
   createdAt?: Prisma.DateTimeFilter<"HistoricalReceivable"> | Date | string
-}, "id" | "titleId_status">
+}, "id" | "titleId">
 
 export type HistoricalReceivableOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -453,11 +452,6 @@ export type HistoricalReceivableUncheckedUpdateManyInput = {
   status?: Prisma.EnumHistoricalReceivableStatusFieldUpdateOperationsInput | $Enums.HistoricalReceivableStatus
   corrections?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type HistoricalReceivableTitleIdStatusCompoundUniqueInput = {
-  titleId: number
-  status: $Enums.HistoricalReceivableStatus
 }
 
 export type HistoricalReceivableCountOrderByAggregateInput = {

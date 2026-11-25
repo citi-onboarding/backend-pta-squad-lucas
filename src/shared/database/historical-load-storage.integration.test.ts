@@ -9,6 +9,7 @@ import {
   startTestDatabase,
   type TestDatabase,
 } from "../../../tests/support/test-database.js";
+import type { Prisma } from "./generated/client.js";
 
 let testDatabase: TestDatabase;
 
@@ -24,9 +25,9 @@ describe("historical order items", () => {
   async function loadItem(data: ReturnType<typeof historicalItemData>) {
     await testDatabase.database.historicalOrderItem.upsert({
       where: {
-        contentKey_occurrence: {
-          contentKey: data.contentKey,
-          occurrence: data.occurrence,
+        orderNumber_productCode: {
+          orderNumber: data.orderNumber,
+          productCode: data.productCode,
         },
       },
       create: data,
@@ -34,48 +35,55 @@ describe("historical order items", () => {
     });
   }
 
-  async function countByKey(contentKey: string) {
+  async function countByOrder(orderNumber: number) {
     return testDatabase.database.historicalOrderItem.count({
-      where: { contentKey },
+      where: { orderNumber },
     });
   }
 
   it("does not duplicate when the same data is loaded twice", async () => {
-    const data = historicalItemData({ productCode: "P00001" });
-    await loadItem(data);
-    await loadItem(data);
-    expect(await countByKey(data.contentKey)).toBe(1);
-  });
-
-  it("does not duplicate an item without product code", async () => {
     const data = historicalItemData();
     await loadItem(data);
     await loadItem(data);
-    expect(await countByKey(data.contentKey)).toBe(1);
-    const found =
-      await testDatabase.database.historicalOrderItem.findFirstOrThrow({
-        where: { contentKey: data.contentKey },
-      });
-    expect(found.productCode).toBeNull();
+    expect(await countByOrder(data.orderNumber)).toBe(1);
   });
 
-  it("keeps two fully identical rows as separate items", async () => {
+  it("rejects an item without product code", async () => {
+    await expect(
+      testDatabase.database.historicalOrderItem.create({
+        data: historicalItemData({ productCode: undefined as never }),
+      }),
+    ).rejects.toThrow("Argument `productCode` is missing");
+  });
+
+  it("rejects a second item with the same order number and product code", async () => {
+    const { database } = testDatabase;
     const first = historicalItemData();
+    await database.historicalOrderItem.create({ data: first });
+    await expect(
+      database.historicalOrderItem.create({ data: { ...first, quantity: 5 } }),
+    ).rejects.toMatchObject({ code: "P2002" });
+  });
+
+  it("keeps different products of the same order", async () => {
+    const first = historicalItemData();
+    const second = historicalItemData({ orderNumber: first.orderNumber });
     await loadItem(first);
-    await loadItem({ ...first, occurrence: 2 });
-    expect(await countByKey(first.contentKey)).toBe(2);
+    await loadItem(second);
+    expect(await countByOrder(first.orderNumber)).toBe(2);
   });
 
   it("stores the total in cents", async () => {
-    const data = historicalItemData({
-      quantity: 3,
-      unitPriceCents: 1050,
-      totalCents: 3150,
+    const created = await testDatabase.database.historicalOrderItem.create({
+      data: historicalItemData({
+        quantity: 3,
+        unitPriceCents: 1050,
+        totalCents: 3150,
+      }),
     });
-    await loadItem(data);
     const found =
-      await testDatabase.database.historicalOrderItem.findFirstOrThrow({
-        where: { contentKey: data.contentKey },
+      await testDatabase.database.historicalOrderItem.findUniqueOrThrow({
+        where: { id: created.id },
       });
     expect(found.totalCents).toBe(3150);
   });
@@ -109,43 +117,47 @@ describe("historical order items", () => {
 });
 
 describe("historical receivables", () => {
-  it("keeps a title and its reversal", async () => {
+  async function loadReceivable(data: Prisma.HistoricalReceivableCreateInput) {
+    await testDatabase.database.historicalReceivable.upsert({
+      where: { titleId: data.titleId },
+      create: data,
+      update: data,
+    });
+  }
+
+  async function findByTitle(titleId: number) {
+    return testDatabase.database.historicalReceivable.findMany({
+      where: { titleId },
+    });
+  }
+
+  it("stores a reversed title as one record", async () => {
+    const data = {
+      ...historicalReceivableData(),
+      status: "REVERSED" as const,
+    };
+    await loadReceivable(data);
+    const found = await findByTitle(data.titleId);
+    expect(found.map((title) => title.status)).toEqual(["REVERSED"]);
+  });
+
+  it("rejects a second record with the same title id", async () => {
     const { database } = testDatabase;
     const original = historicalReceivableData({ status: "PAID" as const });
     await database.historicalReceivable.create({ data: original });
-    await database.historicalReceivable.create({
-      data: {
-        ...original,
-        amountCents: -original.amountCents,
-        status: "REVERSED" as const,
-      },
-    });
-    const found = await database.historicalReceivable.findMany({
-      where: { titleId: original.titleId },
-    });
-    expect(found.map((title) => title.status).sort()).toEqual([
-      "PAID",
-      "REVERSED",
-    ]);
+    await expect(
+      database.historicalReceivable.create({
+        data: { ...original, status: "REVERSED" as const },
+      }),
+    ).rejects.toMatchObject({ code: "P2002" });
   });
 
-  it("does not duplicate the same title with the same status", async () => {
-    const { database } = testDatabase;
-    const data = historicalReceivableData();
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      await database.historicalReceivable.upsert({
-        where: {
-          titleId_status: { titleId: data.titleId, status: data.status },
-        },
-        create: data,
-        update: data,
-      });
-    }
-    expect(
-      await database.historicalReceivable.count({
-        where: { titleId: data.titleId },
-      }),
-    ).toBe(1);
+  it("updates the same record when the status of a title changes", async () => {
+    const paid = historicalReceivableData({ status: "PAID" as const });
+    await loadReceivable(paid);
+    await loadReceivable({ ...paid, status: "REVERSED" as const });
+    const found = await findByTitle(paid.titleId);
+    expect(found.map((title) => title.status)).toEqual(["REVERSED"]);
   });
 
   it("allows an open title without payment date and keeps corrections", async () => {

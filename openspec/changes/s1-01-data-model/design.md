@@ -56,13 +56,13 @@ The contract stores end date and notice days; its situation is computed on deman
 
 ### D8. Historical order items
 
-Each row has a deterministic content key (hash of order, product code or description, quantity and unit price) and an occurrence counter among identical rows, with `@@unique([contentKey, occurrence])`. `productCode` is optional. `totalCents` is stored because the spreadsheet column is a formula without a stored value. `corrections` is `Json?`.
-_Rejected:_ `@@unique([orderNumber, productCode])` — PostgreSQL does not treat two nulls as equal (363 rows have no code) and 27 order/product pairs repeat. _Rejected:_ a counter by row position — it changes if the spreadsheet is exported again with inserted rows.
-The hash itself is computed by the load task; this change only stores it.
+Each row is identified by `@@unique([orderNumber, productCode])`, and `productCode` is required. The historical load (Gabriel's pipeline) resolves the product code from the description, or sends the row to `LoadIssue` when no single match exists, and merges repeated rows before writing, so no row without a product code and no repeated pair reaches this table. `totalCents` is stored because the spreadsheet column is a formula without a stored value. `corrections` is `Json?`.
+_Rejected:_ a content hash plus an occurrence counter (the first version of this change) — it was meant for raw spreadsheets; with a clean load it would store a repeated sale twice and break the update when the load runs again. _Rejected:_ a counter by row position — it changes if the spreadsheet is exported again with inserted rows.
 
 ### D9. Historical receivables
 
-`@@unique([titleId, status])` lets a title and its reversal coexist, since a reversal repeats the title id (6 real pairs). `paidAt` is optional. `corrections` is `Json?`.
+`titleId` is unique. The historical load merges a title and its reversal into one record with status `REVERSED` before writing, so the database accepts one record per title and updates it when its status changes. `paidAt` is optional. `corrections` is `Json?`.
+_Rejected:_ `@@unique([titleId, status])` (the first version of this change) — it kept the paid and the reversed rows side by side, so the same title would count twice in reports and would be duplicated if its status changed later.
 
 ### D10. Load issues
 
@@ -86,7 +86,6 @@ This is a cross-cutting, hard-to-reverse decision, so it is recorded in `docs/ad
 - **Schema owner:** after merge, Sprint 1 schema changes go through this task's owner; other tasks must ask before creating tables.
 - **Fractional money is truncated, not rejected:** Prisma stores 12.5 in an `Int` field as 12 without raising an error (observed in the integration test). The database column is an integer, but rejecting decimals must be done by input validation (Zod `.int()`) in each feature that receives money.
 - **`Int` ceiling:** values above about R$ 21 million need a corrective migration to `BigInt`.
-- **Content key depends on normalization:** if the load changes how it normalizes values, keys change; the load task must keep the normalization stable.
+- **The database relies on the load cleaning first:** a load that does not resolve the product code, merge repeated rows and merge a title with its reversal is rejected by the database instead of silently duplicating data.
 - **`PROSPECT`:** the ERP never sends it; it can be removed later by a corrective migration if the squad decides so.
-- **Identical historical rows:** both are kept and flagged in `LoadIssue`; whether they count as sales is a business decision.
 - **`SyncResult` values** are assumed and may change in review.

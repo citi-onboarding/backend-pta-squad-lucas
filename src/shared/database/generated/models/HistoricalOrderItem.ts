@@ -27,7 +27,6 @@ export type AggregateHistoricalOrderItem = {
 }
 
 export type HistoricalOrderItemAvgAggregateOutputType = {
-  occurrence: number | null
   orderNumber: number | null
   quantity: number | null
   unitPriceCents: number | null
@@ -36,7 +35,6 @@ export type HistoricalOrderItemAvgAggregateOutputType = {
 }
 
 export type HistoricalOrderItemSumAggregateOutputType = {
-  occurrence: number | null
   orderNumber: number | null
   quantity: number | null
   unitPriceCents: number | null
@@ -46,8 +44,6 @@ export type HistoricalOrderItemSumAggregateOutputType = {
 
 export type HistoricalOrderItemMinAggregateOutputType = {
   id: string | null
-  contentKey: string | null
-  occurrence: number | null
   orderNumber: number | null
   date: Date | null
   customerCode: string | null
@@ -65,8 +61,6 @@ export type HistoricalOrderItemMinAggregateOutputType = {
 
 export type HistoricalOrderItemMaxAggregateOutputType = {
   id: string | null
-  contentKey: string | null
-  occurrence: number | null
   orderNumber: number | null
   date: Date | null
   customerCode: string | null
@@ -84,8 +78,6 @@ export type HistoricalOrderItemMaxAggregateOutputType = {
 
 export type HistoricalOrderItemCountAggregateOutputType = {
   id: number
-  contentKey: number
-  occurrence: number
   orderNumber: number
   date: number
   customerCode: number
@@ -105,7 +97,6 @@ export type HistoricalOrderItemCountAggregateOutputType = {
 
 
 export type HistoricalOrderItemAvgAggregateInputType = {
-  occurrence?: true
   orderNumber?: true
   quantity?: true
   unitPriceCents?: true
@@ -114,7 +105,6 @@ export type HistoricalOrderItemAvgAggregateInputType = {
 }
 
 export type HistoricalOrderItemSumAggregateInputType = {
-  occurrence?: true
   orderNumber?: true
   quantity?: true
   unitPriceCents?: true
@@ -124,8 +114,6 @@ export type HistoricalOrderItemSumAggregateInputType = {
 
 export type HistoricalOrderItemMinAggregateInputType = {
   id?: true
-  contentKey?: true
-  occurrence?: true
   orderNumber?: true
   date?: true
   customerCode?: true
@@ -143,8 +131,6 @@ export type HistoricalOrderItemMinAggregateInputType = {
 
 export type HistoricalOrderItemMaxAggregateInputType = {
   id?: true
-  contentKey?: true
-  occurrence?: true
   orderNumber?: true
   date?: true
   customerCode?: true
@@ -162,8 +148,6 @@ export type HistoricalOrderItemMaxAggregateInputType = {
 
 export type HistoricalOrderItemCountAggregateInputType = {
   id?: true
-  contentKey?: true
-  occurrence?: true
   orderNumber?: true
   date?: true
   customerCode?: true
@@ -269,13 +253,11 @@ export type HistoricalOrderItemGroupByArgs<ExtArgs extends runtime.Types.Extensi
 
 export type HistoricalOrderItemGroupByOutputType = {
   id: string
-  contentKey: string
-  occurrence: number
   orderNumber: number
   date: Date
   customerCode: string
   sellerName: string
-  productCode: string | null
+  productCode: string
   description: string | null
   unit: string | null
   quantity: number
@@ -312,13 +294,11 @@ export type HistoricalOrderItemWhereInput = {
   OR?: Prisma.HistoricalOrderItemWhereInput[]
   NOT?: Prisma.HistoricalOrderItemWhereInput | Prisma.HistoricalOrderItemWhereInput[]
   id?: Prisma.StringFilter<"HistoricalOrderItem"> | string
-  contentKey?: Prisma.StringFilter<"HistoricalOrderItem"> | string
-  occurrence?: Prisma.IntFilter<"HistoricalOrderItem"> | number
   orderNumber?: Prisma.IntFilter<"HistoricalOrderItem"> | number
   date?: Prisma.DateTimeFilter<"HistoricalOrderItem"> | Date | string
   customerCode?: Prisma.StringFilter<"HistoricalOrderItem"> | string
   sellerName?: Prisma.StringFilter<"HistoricalOrderItem"> | string
-  productCode?: Prisma.StringNullableFilter<"HistoricalOrderItem"> | string | null
+  productCode?: Prisma.StringFilter<"HistoricalOrderItem"> | string
   description?: Prisma.StringNullableFilter<"HistoricalOrderItem"> | string | null
   unit?: Prisma.StringNullableFilter<"HistoricalOrderItem"> | string | null
   quantity?: Prisma.IntFilter<"HistoricalOrderItem"> | number
@@ -332,13 +312,11 @@ export type HistoricalOrderItemWhereInput = {
 
 export type HistoricalOrderItemOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  contentKey?: Prisma.SortOrder
-  occurrence?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   date?: Prisma.SortOrder
   customerCode?: Prisma.SortOrder
   sellerName?: Prisma.SortOrder
-  productCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  productCode?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   unit?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
@@ -352,17 +330,15 @@ export type HistoricalOrderItemOrderByWithRelationInput = {
 
 export type HistoricalOrderItemWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  contentKey_occurrence?: Prisma.HistoricalOrderItemContentKeyOccurrenceCompoundUniqueInput
+  orderNumber_productCode?: Prisma.HistoricalOrderItemOrderNumberProductCodeCompoundUniqueInput
   AND?: Prisma.HistoricalOrderItemWhereInput | Prisma.HistoricalOrderItemWhereInput[]
   OR?: Prisma.HistoricalOrderItemWhereInput[]
   NOT?: Prisma.HistoricalOrderItemWhereInput | Prisma.HistoricalOrderItemWhereInput[]
-  contentKey?: Prisma.StringFilter<"HistoricalOrderItem"> | string
-  occurrence?: Prisma.IntFilter<"HistoricalOrderItem"> | number
   orderNumber?: Prisma.IntFilter<"HistoricalOrderItem"> | number
   date?: Prisma.DateTimeFilter<"HistoricalOrderItem"> | Date | string
   customerCode?: Prisma.StringFilter<"HistoricalOrderItem"> | string
   sellerName?: Prisma.StringFilter<"HistoricalOrderItem"> | string
-  productCode?: Prisma.StringNullableFilter<"HistoricalOrderItem"> | string | null
+  productCode?: Prisma.StringFilter<"HistoricalOrderItem"> | string
   description?: Prisma.StringNullableFilter<"HistoricalOrderItem"> | string | null
   unit?: Prisma.StringNullableFilter<"HistoricalOrderItem"> | string | null
   quantity?: Prisma.IntFilter<"HistoricalOrderItem"> | number
@@ -372,17 +348,15 @@ export type HistoricalOrderItemWhereUniqueInput = Prisma.AtLeast<{
   sourceRow?: Prisma.IntNullableFilter<"HistoricalOrderItem"> | number | null
   corrections?: Prisma.JsonNullableFilter<"HistoricalOrderItem">
   createdAt?: Prisma.DateTimeFilter<"HistoricalOrderItem"> | Date | string
-}, "id" | "contentKey_occurrence">
+}, "id" | "orderNumber_productCode">
 
 export type HistoricalOrderItemOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  contentKey?: Prisma.SortOrder
-  occurrence?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   date?: Prisma.SortOrder
   customerCode?: Prisma.SortOrder
   sellerName?: Prisma.SortOrder
-  productCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  productCode?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   unit?: Prisma.SortOrderInput | Prisma.SortOrder
   quantity?: Prisma.SortOrder
@@ -404,13 +378,11 @@ export type HistoricalOrderItemScalarWhereWithAggregatesInput = {
   OR?: Prisma.HistoricalOrderItemScalarWhereWithAggregatesInput[]
   NOT?: Prisma.HistoricalOrderItemScalarWhereWithAggregatesInput | Prisma.HistoricalOrderItemScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"HistoricalOrderItem"> | string
-  contentKey?: Prisma.StringWithAggregatesFilter<"HistoricalOrderItem"> | string
-  occurrence?: Prisma.IntWithAggregatesFilter<"HistoricalOrderItem"> | number
   orderNumber?: Prisma.IntWithAggregatesFilter<"HistoricalOrderItem"> | number
   date?: Prisma.DateTimeWithAggregatesFilter<"HistoricalOrderItem"> | Date | string
   customerCode?: Prisma.StringWithAggregatesFilter<"HistoricalOrderItem"> | string
   sellerName?: Prisma.StringWithAggregatesFilter<"HistoricalOrderItem"> | string
-  productCode?: Prisma.StringNullableWithAggregatesFilter<"HistoricalOrderItem"> | string | null
+  productCode?: Prisma.StringWithAggregatesFilter<"HistoricalOrderItem"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"HistoricalOrderItem"> | string | null
   unit?: Prisma.StringNullableWithAggregatesFilter<"HistoricalOrderItem"> | string | null
   quantity?: Prisma.IntWithAggregatesFilter<"HistoricalOrderItem"> | number
@@ -424,13 +396,11 @@ export type HistoricalOrderItemScalarWhereWithAggregatesInput = {
 
 export type HistoricalOrderItemCreateInput = {
   id?: string
-  contentKey: string
-  occurrence?: number
   orderNumber: number
   date: Date | string
   customerCode: string
   sellerName: string
-  productCode?: string | null
+  productCode: string
   description?: string | null
   unit?: string | null
   quantity: number
@@ -444,13 +414,11 @@ export type HistoricalOrderItemCreateInput = {
 
 export type HistoricalOrderItemUncheckedCreateInput = {
   id?: string
-  contentKey: string
-  occurrence?: number
   orderNumber: number
   date: Date | string
   customerCode: string
   sellerName: string
-  productCode?: string | null
+  productCode: string
   description?: string | null
   unit?: string | null
   quantity: number
@@ -464,13 +432,11 @@ export type HistoricalOrderItemUncheckedCreateInput = {
 
 export type HistoricalOrderItemUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  contentKey?: Prisma.StringFieldUpdateOperationsInput | string
-  occurrence?: Prisma.IntFieldUpdateOperationsInput | number
   orderNumber?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customerCode?: Prisma.StringFieldUpdateOperationsInput | string
   sellerName?: Prisma.StringFieldUpdateOperationsInput | string
-  productCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  productCode?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   unit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -484,13 +450,11 @@ export type HistoricalOrderItemUpdateInput = {
 
 export type HistoricalOrderItemUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  contentKey?: Prisma.StringFieldUpdateOperationsInput | string
-  occurrence?: Prisma.IntFieldUpdateOperationsInput | number
   orderNumber?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customerCode?: Prisma.StringFieldUpdateOperationsInput | string
   sellerName?: Prisma.StringFieldUpdateOperationsInput | string
-  productCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  productCode?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   unit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -504,13 +468,11 @@ export type HistoricalOrderItemUncheckedUpdateInput = {
 
 export type HistoricalOrderItemCreateManyInput = {
   id?: string
-  contentKey: string
-  occurrence?: number
   orderNumber: number
   date: Date | string
   customerCode: string
   sellerName: string
-  productCode?: string | null
+  productCode: string
   description?: string | null
   unit?: string | null
   quantity: number
@@ -524,13 +486,11 @@ export type HistoricalOrderItemCreateManyInput = {
 
 export type HistoricalOrderItemUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  contentKey?: Prisma.StringFieldUpdateOperationsInput | string
-  occurrence?: Prisma.IntFieldUpdateOperationsInput | number
   orderNumber?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customerCode?: Prisma.StringFieldUpdateOperationsInput | string
   sellerName?: Prisma.StringFieldUpdateOperationsInput | string
-  productCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  productCode?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   unit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -544,13 +504,11 @@ export type HistoricalOrderItemUpdateManyMutationInput = {
 
 export type HistoricalOrderItemUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  contentKey?: Prisma.StringFieldUpdateOperationsInput | string
-  occurrence?: Prisma.IntFieldUpdateOperationsInput | number
   orderNumber?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customerCode?: Prisma.StringFieldUpdateOperationsInput | string
   sellerName?: Prisma.StringFieldUpdateOperationsInput | string
-  productCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  productCode?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   unit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -562,15 +520,13 @@ export type HistoricalOrderItemUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type HistoricalOrderItemContentKeyOccurrenceCompoundUniqueInput = {
-  contentKey: string
-  occurrence: number
+export type HistoricalOrderItemOrderNumberProductCodeCompoundUniqueInput = {
+  orderNumber: number
+  productCode: string
 }
 
 export type HistoricalOrderItemCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  contentKey?: Prisma.SortOrder
-  occurrence?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   date?: Prisma.SortOrder
   customerCode?: Prisma.SortOrder
@@ -588,7 +544,6 @@ export type HistoricalOrderItemCountOrderByAggregateInput = {
 }
 
 export type HistoricalOrderItemAvgOrderByAggregateInput = {
-  occurrence?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   unitPriceCents?: Prisma.SortOrder
@@ -598,8 +553,6 @@ export type HistoricalOrderItemAvgOrderByAggregateInput = {
 
 export type HistoricalOrderItemMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  contentKey?: Prisma.SortOrder
-  occurrence?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   date?: Prisma.SortOrder
   customerCode?: Prisma.SortOrder
@@ -617,8 +570,6 @@ export type HistoricalOrderItemMaxOrderByAggregateInput = {
 
 export type HistoricalOrderItemMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  contentKey?: Prisma.SortOrder
-  occurrence?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   date?: Prisma.SortOrder
   customerCode?: Prisma.SortOrder
@@ -635,7 +586,6 @@ export type HistoricalOrderItemMinOrderByAggregateInput = {
 }
 
 export type HistoricalOrderItemSumOrderByAggregateInput = {
-  occurrence?: Prisma.SortOrder
   orderNumber?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   unitPriceCents?: Prisma.SortOrder
@@ -651,8 +601,6 @@ export type EnumHistoricalItemStatusFieldUpdateOperationsInput = {
 
 export type HistoricalOrderItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  contentKey?: boolean
-  occurrence?: boolean
   orderNumber?: boolean
   date?: boolean
   customerCode?: boolean
@@ -671,8 +619,6 @@ export type HistoricalOrderItemSelect<ExtArgs extends runtime.Types.Extensions.I
 
 export type HistoricalOrderItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  contentKey?: boolean
-  occurrence?: boolean
   orderNumber?: boolean
   date?: boolean
   customerCode?: boolean
@@ -691,8 +637,6 @@ export type HistoricalOrderItemSelectCreateManyAndReturn<ExtArgs extends runtime
 
 export type HistoricalOrderItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  contentKey?: boolean
-  occurrence?: boolean
   orderNumber?: boolean
   date?: boolean
   customerCode?: boolean
@@ -711,8 +655,6 @@ export type HistoricalOrderItemSelectUpdateManyAndReturn<ExtArgs extends runtime
 
 export type HistoricalOrderItemSelectScalar = {
   id?: boolean
-  contentKey?: boolean
-  occurrence?: boolean
   orderNumber?: boolean
   date?: boolean
   customerCode?: boolean
@@ -729,20 +671,18 @@ export type HistoricalOrderItemSelectScalar = {
   createdAt?: boolean
 }
 
-export type HistoricalOrderItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "contentKey" | "occurrence" | "orderNumber" | "date" | "customerCode" | "sellerName" | "productCode" | "description" | "unit" | "quantity" | "unitPriceCents" | "totalCents" | "status" | "sourceRow" | "corrections" | "createdAt", ExtArgs["result"]["historicalOrderItem"]>
+export type HistoricalOrderItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "date" | "customerCode" | "sellerName" | "productCode" | "description" | "unit" | "quantity" | "unitPriceCents" | "totalCents" | "status" | "sourceRow" | "corrections" | "createdAt", ExtArgs["result"]["historicalOrderItem"]>
 
 export type $HistoricalOrderItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "HistoricalOrderItem"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    contentKey: string
-    occurrence: number
     orderNumber: number
     date: Date
     customerCode: string
     sellerName: string
-    productCode: string | null
+    productCode: string
     description: string | null
     unit: string | null
     quantity: number
@@ -1176,8 +1116,6 @@ export interface Prisma__HistoricalOrderItemClient<T, Null = never, ExtArgs exte
  */
 export interface HistoricalOrderItemFieldRefs {
   readonly id: Prisma.FieldRef<"HistoricalOrderItem", 'String'>
-  readonly contentKey: Prisma.FieldRef<"HistoricalOrderItem", 'String'>
-  readonly occurrence: Prisma.FieldRef<"HistoricalOrderItem", 'Int'>
   readonly orderNumber: Prisma.FieldRef<"HistoricalOrderItem", 'Int'>
   readonly date: Prisma.FieldRef<"HistoricalOrderItem", 'DateTime'>
   readonly customerCode: Prisma.FieldRef<"HistoricalOrderItem", 'String'>

@@ -18,17 +18,18 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 
 - Added the enums and 12 models to `prisma/schema.prisma`: `User`, `Session`, `Customer`, `Product`, `Receivable`, `SyncRun`, `Order`, `OrderItem`, `Contract`, `HistoricalOrderItem`, `HistoricalReceivable` and `LoadIssue`.
 - Added the migration `20261125115933_s1_01_data_model`. The `initial` migration is unchanged.
+- After review, added the corrective migration `20261125184249_s1_01_historical_keys`: it drops `content_key` and `occurrence`, makes `product_code` required, makes order items unique by (`order_number`, `product_code`) and historical receivables unique by `title_id`. No applied migration was edited.
 - Added `bcryptjs` (exact version) and a shared password-hashing function in `src/shared/security/password.ts`.
 - Extended `prisma/seed.ts` with the 8 prototype users (repeatable). The password comes from `SEED_USER_PASSWORD`; a test-only default is used outside production.
 - Regenerated the Prisma client in `src/shared/database/generated`.
-- Added Testcontainers integration tests (52 in total with the existing one) and shared test support in `tests/support/`.
+- Added Testcontainers integration tests (54 in total with the existing one, after review) and shared test support in `tests/support/`.
 
 ## Resulting behavior
 
 - The database rejects a second customer, product or receivable with the same ERP code, a second order with the same send key, a second user with the same e-mail or seller ERP name, and references to records that do not exist.
 - Customer status, order state, user role and the historical statuses accept only their defined values.
 - Every money field is an integer column ending in `Cents`.
-- Historical order items, historical receivables and load issues can be loaded repeatedly without duplicates; a title and its reversal coexist.
+- Historical order items, historical receivables and load issues can be loaded repeatedly without duplicates; a title and its reversal are one record marked `REVERSED`, and an order item needs a product code.
 - After seeding there is one test user for each of the 8 people of the prototype, with hashed passwords.
 
 ## Impact
@@ -40,13 +41,15 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 
 ## Validations executed
 
-- `pnpm test:integration`: 7 files, 52 tests passed.
-- `pnpm typecheck` and `pnpm lint`: no errors.
-- `pnpm test` (unit): all tests passed except 3 architecture tests that failed on the Windows development machine (see Implementation notes); to be confirmed by the CI check on Linux.
-- `pnpm spec:validate` (strict): passed for `change/s1-01-data-model` and `spec/backend-foundation`.
-- `pnpm openapi:check`: passed after `pnpm openapi:generate` normalized line endings; no content change.
-- `pnpm skills:check`: passed after `pnpm skills:sync`.
-- `pnpm format:check`, `pnpm test:coverage` and `pnpm build`: to be run before the pull request.
+- First version: `pnpm test:integration` passed 7 files and 52 tests.
+- After review (historical keys), on 2026-11-25:
+  - Red: `pnpm test:integration` failed 10 of 54 tests, because the database still had the old keys; 44 passed.
+  - Green: after the corrective migration and `pnpm db:generate`, `pnpm test:integration` passed 7 files and 54 tests.
+  - `pnpm prisma migrate reset` applied the three migrations to an empty database, `pnpm prisma db seed` created the 8 users, and `pnpm test:integration` passed 54 tests again.
+  - `pnpm format:check`, `pnpm typecheck`, `pnpm lint` and `pnpm build`: passed.
+  - `pnpm exec openspec validate s1-01-data-model --strict --no-interactive` and `pnpm spec:validate`: passed.
+  - `pnpm openapi:check` and `pnpm skills:check`: passed.
+  - `pnpm verify` and `pnpm test:coverage`: all tests passed except the same 3 architecture tests that fail on the Windows development machine (see Implementation notes); because those fail, the coverage report was not printed locally. To be confirmed by the CI check on Linux.
 
 ## Related artifacts
 
@@ -68,3 +71,5 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 - Assumptions open for review in the pull request: `PROSPECT` in customer status (the ERP never sends it), the `SyncResult` values, the provisional seller ERP names in the seed, and the `SEED_USER_PASSWORD` mechanism.
 - `tests/architecture/boundaries.test.ts` builds a path with `URL.pathname`, which breaks on Windows. It is unrelated to this change (the file was not modified); whether it passes on Linux is to be confirmed by the CI check.
 - Historical quantity is an integer; 308 spreadsheet quantities are text and must be cleaned by the historical load.
+- In Prisma 7, `prisma migrate dev` applies a migration but does not regenerate the client; run `pnpm db:generate` after it, or the client keeps the old fields.
+- `@@index([orderNumber])` on `HistoricalOrderItem` is now redundant with the unique index (`order_number`, `product_code`), which starts with the same column. It was kept to avoid another migration in this review and can be dropped later by a corrective migration.

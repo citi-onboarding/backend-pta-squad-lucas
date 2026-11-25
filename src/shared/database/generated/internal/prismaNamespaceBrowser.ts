@@ -223,8 +223,6 @@ export type ContractScalarFieldEnum = (typeof ContractScalarFieldEnum)[keyof typ
 
 export const HistoricalOrderItemScalarFieldEnum = {
   id: 'id',
-  contentKey: 'contentKey',
-  occurrence: 'occurrence',
   orderNumber: 'orderNumber',
   date: 'date',
   customerCode: 'customerCode',

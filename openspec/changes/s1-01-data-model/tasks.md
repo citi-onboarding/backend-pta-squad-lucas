@@ -32,3 +32,11 @@
 - [x] 5.3 Write `docs/adr/0001-modelo-de-dados.md` and `docs/changes/s1-01-data-model.md` from the templates.
 - [ ] 5.4 Run `pnpm exec openspec validate s1-01-data-model --strict --no-interactive` again; archive only after explicit confirmation from the developer.
 - [ ] 5.5 Open the pull request against `develop` with the screenshot, the note on how AI was used, João and Gabriel as reviewers and the open assumptions listed; after merge, announce in the squad group that everyone can write to the database.
+
+## 6. Review change: historical keys (Gabriel's review)
+
+- [x] 6.1 Update `specs/historical-load-storage/spec.md`, `design.md` (D8, D9 and risks) and `proposal.md` for the new keys: historical order items unique by order number and required product code; historical receivables unique by title id, with a title and its reversal stored as one `REVERSED` record. Run `pnpm exec openspec validate s1-01-data-model --strict --no-interactive`.
+- [x] 6.2 Red: the developer rewrites the historical order item and historical receivable integration tests and the test data factory for the new keys, runs `pnpm test:integration` and confirms they fail because the database still has the old keys.
+- [x] 6.3 Green: change `prisma/schema.prisma` (remove `contentKey` and `occurrence`, require `productCode`, add `@@unique([orderNumber, productCode])`, make `titleId` unique and remove `@@unique([titleId, status])`), generate the new corrective migration with `pnpm db:migrate --name s1_01_historical_keys` without editing applied migrations, and run `pnpm test:integration` until it passes.
+- [x] 6.4 Refactor and gates: run `pnpm format:check`, `pnpm typecheck`, `pnpm lint`, the strict OpenSpec validation, `pnpm build`, a database reset with seed and `pnpm test:integration`.
+- [x] 6.5 Update `docs/adr/0001-modelo-de-dados.md` and `docs/changes/s1-01-data-model.md`, check that no reference to the old keys remains, and add a "Changes after review" section to the pull request description.

@@ -94,9 +94,8 @@ export function historicalItemData<T extends object = object>(
 ) {
   const n = next();
   return {
-    contentKey: `content-key-${String(n)}`,
-    occurrence: 1,
     orderNumber: 40_000 + n,
+    productCode: `P${String(n).padStart(5, "0")}`,
     date: new Date("2025-01-10"),
     customerCode: "C0072",
     sellerName: "Marcos Viana",

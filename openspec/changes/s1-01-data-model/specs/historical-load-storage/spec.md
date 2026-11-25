@@ -6,22 +6,27 @@ Defines how historical order items, historical receivables and data problems fou
 
 ### Requirement: Historical order items are loaded without duplicates
 
-The system SHALL identify each historical order item by its content, with a counter only among rows whose content is identical, so that loading the same data again does not create new items, including items without a product code.
+The system SHALL identify each historical order item by its order number and product code, and SHALL require the product code, so that loading the same data again does not create new items and an item that cannot be tied to a product is not stored as an order item.
 
 #### Scenario: Repeated load does not duplicate
 
 - **WHEN** the same set of historical order items is loaded twice
 - **THEN** the number of stored items is the same after the second load
 
-#### Scenario: Item without product code is not duplicated
+#### Scenario: Item without product code is rejected
 
-- **WHEN** an item without a product code is loaded twice
-- **THEN** exactly one such item exists
+- **WHEN** an item without a product code is saved
+- **THEN** the save is rejected
 
-#### Scenario: Identical rows are both kept
+#### Scenario: Same product twice in one order is rejected
 
-- **WHEN** two fully identical rows of the same order are loaded
-- **THEN** both are stored as separate items
+- **WHEN** a second item with the same order number and product code is saved
+- **THEN** the save is rejected
+
+#### Scenario: Different products of the same order are both kept
+
+- **WHEN** two items of the same order with different product codes are loaded
+- **THEN** both are stored
 
 ### Requirement: Historical item totals and statuses
 
@@ -44,17 +49,22 @@ The system SHALL store, for each historical order item, a total in cents, a stat
 
 ### Requirement: Historical receivables and reversals
 
-The system SHALL accept the historical receivable statuses `PAID`, `OPEN`, `OVERDUE` and `REVERSED`, SHALL allow the payment date to be empty, SHALL keep a record of the corrections applied, and SHALL keep both the original title and its reversal even though they share the same title id.
+The system SHALL accept the historical receivable statuses `PAID`, `OPEN`, `OVERDUE` and `REVERSED`, SHALL allow the payment date to be empty, SHALL keep a record of the corrections applied, and SHALL identify each historical receivable by its title id, so that a title and its reversal are stored as one record whose status is `REVERSED`.
 
-#### Scenario: Title and its reversal are both stored
+#### Scenario: Reversed title is stored as one record
 
-- **WHEN** a title and its reversal with the same title id are stored
-- **THEN** both exist, one with its original status and one with status `REVERSED`
+- **WHEN** a reversed title is stored
+- **THEN** exactly one record exists for its title id, with status `REVERSED`
 
-#### Scenario: Same title is not duplicated
+#### Scenario: Second record with the same title id is rejected
 
-- **WHEN** the same title with the same status is loaded twice
-- **THEN** exactly one such record exists
+- **WHEN** a second record with the same title id is saved
+- **THEN** the save is rejected
+
+#### Scenario: Status change updates the same record
+
+- **WHEN** a title already stored as `PAID` is loaded again as `REVERSED`
+- **THEN** exactly one record exists and its status is `REVERSED`
 
 #### Scenario: Open title has no payment date
 

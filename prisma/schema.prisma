@@ -239,14 +239,12 @@ model Contract {
 
 model HistoricalOrderItem {
   id             String               @id @default(uuid())
-  // Identity of the row by content, plus a counter among identical rows.
-  contentKey     String               @map("content_key")
-  occurrence     Int                  @default(1)
   orderNumber    Int                  @map("order_number")
   date           DateTime
   customerCode   String               @map("customer_code")
   sellerName     String               @map("seller_name")
-  productCode    String?              @map("product_code")
+  // Required: the load resolves it from the description or records a LoadIssue.
+  productCode    String               @map("product_code")
   description    String?
   unit           String?
   quantity       Int
@@ -257,14 +255,16 @@ model HistoricalOrderItem {
   corrections    Json?
   createdAt      DateTime             @default(now()) @map("created_at")
 
-  @@unique([contentKey, occurrence])
+  // The load merges repeated rows, so one order has each product once.
+  @@unique([orderNumber, productCode])
   @@index([orderNumber])
   @@map("historical_order_items")
 }
 
 model HistoricalReceivable {
   id           String                     @id @default(uuid())
-  titleId      Int                        @map("title_id")
+  // The load merges a title and its reversal into one REVERSED record.
+  titleId      Int                        @unique @map("title_id")
   customerCode String                     @map("customer_code")
   orderNumber  Int                        @map("order_number")
   installment  String
@@ -276,8 +276,6 @@ model HistoricalReceivable {
   corrections  Json?
   createdAt    DateTime                   @default(now()) @map("created_at")
 
-  // A reversal repeats the id of the original title, so the status is part of the key.
-  @@unique([titleId, status])
   @@index([customerCode])
   @@map("historical_receivables")
 }

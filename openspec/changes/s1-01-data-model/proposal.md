@@ -21,8 +21,8 @@ These were decided without waiting for answers and are open to review in the pul
 - Customer status keeps four values (`ACTIVE`, `BLOCKED`, `INACTIVE`, `PROSPECT`). The ERP only sends the first three; `PROSPECT` exists only in the old spreadsheets.
 - A seller's ERP name is stored as text (`erpSellerName`), because the ERP exposes the customer's seller as a text field (`vendedor`). `Customer.sellerId` is optional and is filled by matching that name.
 - A minimal `Session` table (user, creation, last use, end) is created here so login can implement logout and the 8 hours of inactivity.
-- Receivable history uses a composite unique key (`titleId` + `status`), because a reversal repeats the id of the original title.
-- Historical order items are identified by a content-based key plus a counter among identical rows, because 363 rows have no product code and 26 of 27 repeated order/product pairs are fully identical rows. Identical rows are also recorded as possible duplicates in `LoadIssue`.
+- Receivable history is unique by title id (`titleId`). The historical load merges a title and its reversal into one record with status `REVERSED` before writing (changed after Gabriel's review).
+- Historical order items are unique by order number and product code (`orderNumber` + `productCode`), and the product code is required. The historical load resolves the product code from the description, or records the row in `LoadIssue` when no single match exists, and merges repeated rows before writing (changed after Gabriel's review).
 - A contract's minimum volume is stored in cents per month (`minVolumeCents`), confirmed in the contract PDFs. The contract file is stored as a text path.
 - The example module (`example-items`) stays; its removal is out of scope.
 
