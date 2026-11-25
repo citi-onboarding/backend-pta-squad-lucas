@@ -13,56 +13,57 @@ supersedes: null
 superseded_by: null
 ---
 
-# 0003: Pipeline de dados históricos em Python com pandas gravando no PostgreSQL do back-end
+# 0003: Historical data ingestion pipeline in Python with pandas writing to backend PostgreSQL
 
 ## Context
 
-Todo o histórico comercial e financeiro da DistriLux anterior a outubro de 2026 existe exclusivamente em três planilhas preenchidas manualmente (`Clientes - Comercial.xlsx`, `Pedidos 2025-2026 - Comercial.xlsx` e `titulos.csv`, somando 23.801 linhas). Os arquivos apresentam múltiplas inconsistências de formato (datas em 5 padrões + seriais numéricos do Excel, valores monetários em reais/milhares/negativos, quantidades com unidades, códigos em caixa mista, apelidos de vendedores, duplicatas exatas e conflitantes, estornos e registros sem código).
+All DistriLux commercial and financial history prior to October 2026 exists exclusively in three manually maintained spreadsheets (`Clientes - Comercial.xlsx`, `Pedidos 2025-2026 - Comercial.xlsx`, and `titulos.csv`, totaling 23,811 rows). These files contain heterogeneous formats and data quality issues: five date patterns plus Excel serial numbers, mixed BRL/US/abbreviated monetary values, negative reversal amounts, quantities with unit suffixes, short and mixed-case ERP codes, seller nicknames, exact and conflicting duplicates, and rows missing codes.
 
-Esse histórico limpo é pré-requisito simultâneo para:
+This cleaned history is required simultaneously by:
 
-1. Comparação histórica de períodos no painel comercial do portal web e no app mobile;
-2. Engenharia de variáveis (`ChurnFeature`, task `S1-08`) e treinamento do modelo de predição de churn na Sprint 2.
+1. Historical period comparisons in the commercial web portal and mobile manager app;
+2. Monthly churn feature engineering (`ChurnFeature`, task `s1-08-churn-features`) and Sprint 2 churn model training.
 
-Ao mesmo tempo, a API principal do portal está construída em Node.js/TypeScript com PostgreSQL gerenciado via Prisma (`prisma/schema.prisma`), e o cadastro oficial de clientes e produtos é sincronizado a partir do ERP (`RN-09`, `RN-16`).
+Meanwhile, the portal backend is built in Node.js 22 / TypeScript with PostgreSQL managed via Prisma (`prisma/schema.prisma`), and authoritative master data is synchronized from the ERP (`RN-09`, `RN-16`).
 
 ## Decision
 
-Adotamos **Python 3.11+ com `pandas`, `openpyxl`, `psycopg` e `pytest`** dentro da pasta `data/` do repositório `backend-pta-squad-lucas`, gravando diretamente nas tabelas de histórico (`HistoricalOrderItem`, `HistoricalReceivable` e `LoadIssue`) no **mesmo banco PostgreSQL** do back-end.
+We adopt **Python 3.11+ with `pandas`, `openpyxl`, `psycopg[binary]`, and `pytest`** under `data/` in `backend-pta-squad-lucas`, writing directly into the historical tables (`historical_order_items`, `historical_receivables`, and `load_issues`) inside the **same PostgreSQL database** used by the Node.js backend.
 
-Regras que futuras alterações devem preservar:
+Invariants that future changes must preserve:
 
-- **Fonte única do schema:** a definição e evolução das tabelas pertencem exclusivamente ao `prisma/schema.prisma` (migrations gerenciadas pelo Prisma); o pipeline Python apenas lê o catálogo sincronizado do ERP (`Customer`, `Product`) e executa operações de escrita idempotentes nas tabelas de histórico.
-- **Separação de camadas:** transformações puras célula-a-célula vivem em `data/pipeline/cleaners.py` (usando `Decimal` para centavos inteiros), enquanto leitura, deduplicação pós-limpeza, reconciliação com o ERP e persistência vivem em `data/pipeline/load_history.py`.
-- **Prevalência do ERP (RN-09):** o pipeline histórico nunca sobrescreve registros oficiais sincronizados do ERP (`Customer`, `Product`, `Receivable`).
-- **Idempotência e rastreabilidade (RN-16):** toda escrita usa `UPSERT` pelas chaves naturais (`(orderNumber, productErpId)`, `titleNumber` e `(sourceFile, rowNumber, reason)`), registra correções aplicadas e fecha obrigatoriamente a conta `lidas = carregadas + descartadas + pendentes` por arquivo.
-- **Dados brutos fora do Git:** `data/raw/` e `data/.venv/` permanecem listados no `.gitignore`.
+- **Single schema source of truth:** Table definitions and migrations remain owned exclusively by `prisma/schema.prisma`; the Python pipeline only reads ERP-synchronized tables (`customers`, `products`) and performs idempotent writes to the three historical tables.
+- **Layer separation:** Pure cell-level cleaning functions live in `data/pipeline/cleaners.py` (using `Decimal` to guarantee exact integer cents per `RN-13`), while dataset orchestration, post-cleaning deduplication, ERP matching, and persistence live in `data/pipeline/load_history.py`.
+- **ERP precedence (`RN-09`):** The historical pipeline never writes to or overwrites ERP-owned tables (`customers`, `products`, `receivables`).
+- **Idempotency and traceability (`RN-16`):** Every write uses `UPSERT` (`ON CONFLICT ... DO UPDATE`) keyed by natural unique constraints (`(order_number, product_code)`, `title_id`, and `(source_file, row_number, problem_type)`), records applied corrections, and verifies `read = loaded + discarded + pending` per source file.
+- **Raw data excluded from Git:** `data/raw/`, `data/.venv/`, and `data/notebooks/` remain listed in `.gitignore`.
 
 ## Consequences
 
 ### Positive
 
-- Aproveita o ecossistema maduro de ciência e engenharia de dados em Python (`pandas`, `openpyxl`, `pytest`), criando continuidade direta com a etapa de engenharia de features (`S1-08`) e o treinamento do modelo de ML na Sprint 2.
-- Elimina a necessidade de manter um segundo banco analítico ou infraestrutura extra: a API Node.js, o painel e o pipeline de ML consultam o mesmo PostgreSQL.
-- Permite desenvolver e validar toda a limpeza e reconciliação de forma determinística em memória (`--dry-run` e `InMemoryHistoryStore`) mesmo antes da conclusão das migrations do banco.
+- Leverages the mature Python data engineering ecosystem (`pandas`, `openpyxl`, `pytest`), providing direct continuity into churn feature engineering (`s1-08-churn-features`) and Sprint 2 machine learning workflows.
+- Avoids operating and synchronizing a second analytical database: the Node.js API, dashboards, and ML scripts read from the same PostgreSQL instance.
+- Enables deterministic local validation and idempotency testing (`--dry-run` with `InMemoryHistoryStore`) before database migrations or live ERP sync are merged.
 
 ### Negative
 
-- Introduz um segundo runtime (`Python 3.11+` em ambiente virtual `data/.venv`) dentro de um repositório primariamente Node.js/TypeScript.
-- Alterações em nomes de tabelas ou colunas no `prisma/schema.prisma` precisam ser refletidas nas queries SQL parametrizadas do `PostgresHistoryStore` em `data/pipeline/load_history.py`.
+- Introduces a second runtime (`Python 3.11+` isolated in `data/.venv/`) inside a primarily Node.js/TypeScript repository.
+- Changes to table or column names in `prisma/schema.prisma` must be kept synchronized with the parameterized SQL queries in `PostgresHistoryStore` inside `data/pipeline/load_history.py`.
 
 ## Alternatives considered
 
-### Pipeline de ETL em TypeScript/Node.js com Prisma
+### ETL pipeline in TypeScript/Node.js with Prisma
 
-Manteria um único runtime no repositório e tipagem compartilhada via Prisma Client. Foi descartada porque a frente de Dados já exigirá Python para engenharia de variáveis (`S1-08`) e modelagem de Machine Learning (Sprint 2), além de o ecossistema `pandas` + `openpyxl` oferecer produtividade e confiabilidade superiores para diagnóstico, limpeza tabular e análise de planilhas Excel heterogêneas.
+Would keep a single runtime and generated Prisma types across the repository. Rejected because the Data track already requires Python for churn feature computation (`s1-08-churn-features`) and Sprint 2 ML model training, and `pandas` + `openpyxl` provide stronger tooling for inspecting and cleaning heterogeneous spreadsheets.
 
-### Banco de dados separado (SQLite ou DuckDB) para histórico e ML
+### Separate analytical database (SQLite or DuckDB) for history and ML
 
-Evitaria acoplamento inicial com o PostgreSQL do back-end. Foi descartada porque o painel comercial do portal (servido pela API Node.js) e o app mobile precisam consultar os mesmos indicadores históricos e de risco de churn em tempo real, o que exigiria uma sincronização extra desnecessária entre bancos.
+Would decouple the data pipeline from backend schema evolution initially. Rejected because the commercial portal API and mobile app must query historical comparisons and churn risk directly from PostgreSQL, which would require an unnecessary extra sync layer between databases.
 
 ## References
 
-- Especificação da task `S1-07-history-load` (`F11 — Carga e Limpeza do Histórico`, parte 1 de 2)
-- Regras de negócio `RN-09`, `RN-13` e `RN-16` do PRD DistriLux Portal de Pedidos
-- `data/pipeline/cleaners.py`, `data/pipeline/load_history.py` e suíte `data/tests/`
+- OpenSpec change `openspec/changes/s1-07-history-load/`
+- Task specification `S1-07-history-load` (`F11 — Carga e Limpeza do Histórico`, part 1 of 2)
+- Business rules `RN-09`, `RN-13`, and `RN-16` in the DistriLux PRD
+- `data/pipeline/cleaners.py`, `data/pipeline/load_history.py`, and `data/tests/`
