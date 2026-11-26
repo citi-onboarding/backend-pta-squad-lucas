@@ -8,6 +8,7 @@ import {
   startTestDatabase,
   type TestDatabase,
 } from "../../../tests/support/test-database.js";
+import { verifyPassword } from "../security/password.js";
 
 let testDatabase: TestDatabase;
 
@@ -169,6 +170,7 @@ describe("test users from the prototype", () => {
     for (const user of await seededUsers()) {
       expect(user.passwordHash).not.toBe(plainPassword);
       expect(user.passwordHash).toMatch(/^\$2[aby]\$/);
+      expect(await verifyPassword(plainPassword, user.passwordHash)).toBe(true);
     }
   });
 

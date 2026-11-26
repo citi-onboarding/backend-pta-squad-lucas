@@ -55,6 +55,9 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
   - Red: with `hashPassword` returning the plain password and `verifyPassword` always returning `true`, `pnpm exec vitest run src/shared/security/password.test.ts` failed 2 of 3 tests on their assertions. The change was then reverted.
   - Green and Refactor: no production change; the same command passed 3 of 3 tests.
   - `pnpm exec vitest run --coverage --exclude "tests/architecture/**" --exclude "**/node_modules/**" --exclude "**/*.integration.test.ts"` passed 42 tests with statements 95.34%, branches 94.11%, functions 92.3% and lines 95.23%. The architecture tests were excluded only because they fail on Windows.
+- After review (seeded password verification), on 2026-11-26:
+  - Red: with the seed hashing `seedPassword() + "-wrong"`, `pnpm exec vitest run --config vitest.integration.config.ts src/shared/database/user-account-storage.integration.test.ts -t "stores only password hashes"` failed on the new `verifyPassword` assertion, while the two older assertions passed. The change was then reverted.
+  - Green: no production change; the same command passed.
 - After review (single migration), on 2026-11-26:
   - `pnpm test:integration` passed 7 files and 54 tests.
   - `pnpm prisma migrate reset --force` applied `20260813000000_initial` and `20261125115933_s1_01_data_model` to the local database, and `pnpm prisma db seed` created the 8 users.
