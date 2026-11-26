@@ -49,7 +49,12 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
   - `pnpm format:check`, `pnpm typecheck`, `pnpm lint` and `pnpm build`: passed.
   - `pnpm exec openspec validate s1-01-data-model --strict --no-interactive` and `pnpm spec:validate`: passed.
   - `pnpm openapi:check` and `pnpm skills:check`: passed.
-  - `pnpm verify` and `pnpm test:coverage`: all tests passed except the same 3 architecture tests that fail on the Windows development machine (see Implementation notes); because those fail, the coverage report was not printed locally. To be confirmed by the CI check on Linux.
+  - `pnpm verify` and `pnpm test:coverage`: all tests passed except the same 3 architecture tests that fail on the Windows development machine (see Implementation notes).
+- After review (password unit test), on 2026-11-26:
+  - The CI check does not run `pnpm test:coverage`, and `src/shared/security/password.ts` had no unit test, so coverage was below the thresholds (lines 88.09%, functions 76.92%, statements 88.37%).
+  - Red: with `hashPassword` returning the plain password and `verifyPassword` always returning `true`, `pnpm exec vitest run src/shared/security/password.test.ts` failed 2 of 3 tests on their assertions. The change was then reverted.
+  - Green and Refactor: no production change; the same command passed 3 of 3 tests.
+  - `pnpm exec vitest run --coverage --exclude "tests/architecture/**" --exclude "**/node_modules/**" --exclude "**/*.integration.test.ts"` passed 42 tests with statements 95.34%, branches 94.11%, functions 92.3% and lines 95.23%. The architecture tests were excluded only because they fail on Windows.
 - After review (single migration), on 2026-11-26:
   - `pnpm test:integration` passed 7 files and 54 tests.
   - `pnpm prisma migrate reset --force` applied `20260813000000_initial` and `20261125115933_s1_01_data_model` to the local database, and `pnpm prisma db seed` created the 8 users.
