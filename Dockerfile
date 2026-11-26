@@ -24,6 +24,7 @@ ENV NODE_ENV=development
 COPY tsconfig.json tsconfig.build.json prisma.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
+COPY tests/support ./tests/support
 RUN pnpm rebuild && pnpm db:generate && pnpm build
 
 FROM build AS migration
