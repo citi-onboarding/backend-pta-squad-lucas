@@ -18,6 +18,8 @@ env:
   NODE_ENV: test
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/node_boilerplate_test
   CORS_ORIGINS: http://localhost:5173
+  ERP_API_URL: https://erp.example.invalid
+  ERP_API_KEY: fake-erp-key-for-tests
   LOG_LEVEL: silent
   OPENSPEC_TELEMETRY: 0
 

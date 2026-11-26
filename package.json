@@ -29,6 +29,7 @@
     "skills:sync": "node scripts/check-agent-skills.mjs --sync",
     "openapi:generate": "node --import tsx scripts/generate-openapi.ts",
     "openapi:check": "node --import tsx scripts/check-openapi.ts",
+    "erp:smoke": "node --import tsx scripts/erp-smoke.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm test:architecture && pnpm spec:validate && pnpm openapi:check && pnpm skills:check",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

@@ -11,6 +11,13 @@ const envSchema = z.object({
     .default("info"),
   CORS_ORIGINS: z.string().default("http://localhost:5173"),
   DATABASE_URL: z.url().startsWith("postgresql://"),
+  ERP_API_URL: z
+    .url({ protocol: /^https$/ })
+    .refine((url) => !url.endsWith("/"), {
+      message: "ERP_API_URL must not end with a slash.",
+    }),
+  ERP_API_KEY: z.string().min(1),
+  ERP_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
 });
 
 export type Environment = z.infer<typeof envSchema> & { corsOrigins: string[] };

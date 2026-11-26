@@ -12,6 +12,9 @@ const environment: Environment = {
   LOG_LEVEL: "silent",
   CORS_ORIGINS: "http://localhost:5173",
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test",
+  ERP_API_URL: "https://erp.example.invalid",
+  ERP_API_KEY: "fake-erp-key-for-tests",
+  ERP_REQUEST_TIMEOUT_MS: 60_000,
   corsOrigins: ["http://localhost:5173"],
 };
 
