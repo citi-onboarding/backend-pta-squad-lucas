@@ -77,6 +77,10 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
   - Red: with the seed temporarily storing no ERP name for sellers, `pnpm exec vitest run --config vitest.integration.config.ts src/shared/database/user-account-storage.integration.test.ts -t "gives every seller an ERP name"` failed on its assertion. The seed was then reverted.
   - Green: no production change; the same command passed.
   - Refactor: no change; `pnpm test:integration` passed 7 files and 55 tests.
+- After review (Docker image build), on 2026-11-26:
+  - Red: `pnpm test:container` failed at `docker build`. Inside the image, `pnpm build` runs `pnpm typecheck`, which also checks the integration tests in `src/`; they import `tests/support/`, which the `Dockerfile` did not copy (`error TS2307: Cannot find module '../../../tests/support/test-database.js'`).
+  - Green: added `COPY tests/support ./tests/support` to the `build` stage. `pnpm test:container` built both images, applied `20260813000000_initial` and `20261125115933_s1_01_data_model`, and printed `Production container smoke test passed.` The runtime image is unchanged; the migration image, built from the `build` stage, now also contains the two test support files.
+  - Refactor: no change; `pnpm build` passed.
 
 ## Related artifacts
 
@@ -100,3 +104,4 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 - Historical quantity is an integer; 308 spreadsheet quantities are text and must be cleaned by the historical load.
 - In Prisma 7, `prisma migrate dev` applies a migration but does not regenerate the client; run `pnpm db:generate` after it, or the client keeps the old fields.
 - `@@index([orderNumber])` on `HistoricalOrderItem` is now redundant with the unique index (`order_number`, `product_code`), which starts with the same column. It was kept to avoid another migration in this review and can be dropped later by a corrective migration.
+- The CI check runs only `pnpm format:check`, `pnpm verify` and `pnpm build`. It does not run `pnpm test:container`, so a broken Docker image build, like the missing `tests/support` copy, shows up only when that gate is run locally.
