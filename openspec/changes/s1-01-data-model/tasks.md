@@ -29,7 +29,7 @@
 
 - [x] 5.1 Run `pnpm format:check`, `pnpm verify` (typecheck and lint), `pnpm test:coverage`, `pnpm test:integration` and `pnpm build`; all must pass.
 - [x] 5.2 Recreate the local database from scratch, run the seed and open Prisma Studio (`pnpm db:studio`) to capture the screenshot for the pull request.
-- [x] 5.3 Write `docs/adr/0001-modelo-de-dados.md` and `docs/changes/s1-01-data-model.md` from the templates.
+- [x] 5.3 Write `docs/adr/0001-sprint-1-data-model.md` and `docs/changes/s1-01-data-model.md` from the templates.
 - [ ] 5.4 Run `pnpm exec openspec validate s1-01-data-model --strict --no-interactive` again; archive only after explicit confirmation from the developer.
 - [ ] 5.5 Open the pull request against `develop` with the screenshot, the note on how AI was used, João and Gabriel as reviewers and the open assumptions listed; after merge, announce in the squad group that everyone can write to the database.
 
@@ -39,7 +39,7 @@
 - [x] 6.2 Red: the developer rewrites the historical order item and historical receivable integration tests and the test data factory for the new keys, runs `pnpm test:integration` and confirms they fail because the database still has the old keys.
 - [x] 6.3 Green: change `prisma/schema.prisma` (remove `contentKey` and `occurrence`, require `productCode`, add `@@unique([orderNumber, productCode])`, make `titleId` unique and remove `@@unique([titleId, status])`), generate the new corrective migration with `pnpm db:migrate --name s1_01_historical_keys` without editing applied migrations, and run `pnpm test:integration` until it passes.
 - [x] 6.4 Refactor and gates: run `pnpm format:check`, `pnpm typecheck`, `pnpm lint`, the strict OpenSpec validation, `pnpm build`, a database reset with seed and `pnpm test:integration`.
-- [x] 6.5 Update `docs/adr/0001-modelo-de-dados.md` and `docs/changes/s1-01-data-model.md`, check that no reference to the old keys remains, and add a "Changes after review" section to the pull request description.
+- [x] 6.5 Update `docs/adr/0001-sprint-1-data-model.md` and `docs/changes/s1-01-data-model.md`, check that no reference to the old keys remains, and add a "Changes after review" section to the pull request description.
 
 ## 7. Review change: single migration
 
@@ -47,7 +47,7 @@ Neither `s1_01_data_model` nor `s1_01_historical_keys` was applied to any shared
 
 - [x] 7.1 Replace the SQL of `20261125115933_s1_01_data_model` with the diff from the `develop` schema to the current `prisma/schema.prisma`, delete `20261125184249_s1_01_historical_keys`, and confirm the `initial` migration is unchanged and the new SQL has no `DROP` statement.
 - [x] 7.2 Refactor check: reset the local database with `pnpm prisma migrate reset`, run the seed, and run `pnpm test:integration`; behavior must not change.
-- [x] 7.3 Update `docs/adr/0001-modelo-de-dados.md` and `docs/changes/s1-01-data-model.md` so they describe one migration, and run `pnpm exec openspec validate s1-01-data-model --strict --no-interactive`.
+- [x] 7.3 Update `docs/adr/0001-sprint-1-data-model.md` and `docs/changes/s1-01-data-model.md` so they describe one migration, and run `pnpm exec openspec validate s1-01-data-model --strict --no-interactive`.
 - [x] 7.4 Cover `src/shared/security/password.ts` with a unit test (`password.test.ts`) for the scenario "Seeded passwords are hashes": the hash differs from the plain password, the plain password verifies, and a different password does not. Without it, `pnpm test:coverage` fails its thresholds. The code already existed, so Red was shown by temporarily replacing both functions with wrong ones and reverting them.
 - [x] 7.5 Complete the scenario "Seeded passwords are hashes" in `user-account-storage.integration.test.ts`: assert that the plain password verifies against every seeded hash. The seed was already correct, so Red was shown by temporarily making the seed hash a different password and reverting it.
 - [x] 7.6 Complete the scenario "Duplicate customer ERP code is rejected" in `erp-code-uniqueness.integration.test.ts`: after the rejected save, assert that the existing customer still has its original name. PostgreSQL makes the rejected insert atomic, so no production defect can produce "rejected but changed"; Red was shown by temporarily expecting the duplicate's name and reverting it.

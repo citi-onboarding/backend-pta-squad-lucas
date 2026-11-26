@@ -84,7 +84,7 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 - Specifications: `openspec/changes/s1-01-data-model/specs/`
 - Design: `openspec/changes/s1-01-data-model/design.md`
 - Tasks: `openspec/changes/s1-01-data-model/tasks.md`
-- ADR: `docs/adr/0001-modelo-de-dados.md`
+- ADR: `docs/adr/0001-sprint-1-data-model.md`
 
 ## Usage
 

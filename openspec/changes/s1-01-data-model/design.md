@@ -79,7 +79,7 @@ Integration tests against a real PostgreSQL (Testcontainers) cover each scenario
 
 ### D13. ADR
 
-This is a cross-cutting, hard-to-reverse decision, so it is recorded in `docs/adr/0001-modelo-de-dados.md`.
+This is a cross-cutting, hard-to-reverse decision, so it is recorded in `docs/adr/0001-sprint-1-data-model.md`.
 
 ## Risks / Trade-offs
 

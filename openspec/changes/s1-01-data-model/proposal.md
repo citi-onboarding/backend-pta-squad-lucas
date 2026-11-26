@@ -11,7 +11,7 @@ Sprint 1 needs one shared database design before three people start building on 
 - Model closed lists as enums: user roles, customer status, the 8 order states, receivable status and historical statuses.
 - Seed one test user per role, covering the 8 people of the prototype, with hashed passwords.
 - Add an integration test proving that two customers with the same ERP code are rejected.
-- Add an ADR (`docs/adr/0001-modelo-de-dados.md`) and a change record (`docs/changes/s1-01-data-model.md`).
+- Add an ADR (`docs/adr/0001-sprint-1-data-model.md`) and a change record (`docs/changes/s1-01-data-model.md`).
 - No breaking change: nothing in the existing example module is removed or altered.
 
 ### Assumptions recorded (authorized by the squad manager)
