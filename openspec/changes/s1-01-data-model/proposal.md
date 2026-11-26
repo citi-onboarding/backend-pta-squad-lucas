@@ -44,7 +44,7 @@ None. There are no existing specs under `openspec/specs/`.
 
 - **Business:** unblocks the login, synchronization and historical-load tasks; encodes business rules RN-02, RN-08, RN-11, RN-12, RN-13, RN-15 and RN-16 in the database.
 - **API:** none. No endpoint, validation schema or OpenAPI contract changes.
-- **Database:** one new additive migration; the `initial` migration is untouched.
+- **Database:** one new additive migration; the `initial` migration is untouched. Rollback: a corrective migration that drops the 12 new tables and their enums; it is safe only while no later task has written data to them, and it must be coordinated with the tasks that depend on this structure.
 - **Security:** passwords are stored only as hashes; seed passwords are test-only; no secret is committed.
 - **Dependencies:** adds `bcryptjs` (approved by the squad) for password hashing in a shared function used by the seed and reusable by login.
 - **Observability:** `SyncRun` and `LoadIssue` store the results and problems of synchronizations and loads.

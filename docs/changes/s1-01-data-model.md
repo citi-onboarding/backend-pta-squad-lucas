@@ -38,6 +38,7 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 - Other tasks can write to the database only after this change is merged into `develop`.
 - Prisma truncates decimals given to integer fields (12.5 becomes 12). Features that receive money must validate it as an integer at their input.
 - The example module (`example-items`) is untouched and still works.
+- Rollback: never edit or delete the applied migration; add a corrective migration that drops the 12 new tables and their enums. This is safe only before login, synchronization or the historical load write data, and it breaks those tasks until they are adapted.
 
 ## Validations executed
 
