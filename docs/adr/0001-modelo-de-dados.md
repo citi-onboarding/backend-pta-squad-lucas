@@ -18,7 +18,7 @@ The design also has to make the business rules enforceable by the database itsel
 
 ## Decision
 
-- **One additive migration** (`s1_01_data_model`) creates 12 tables and all enums. The existing `initial` migration is never edited; later changes use corrective migrations, as the review of the historical keys already did (`s1_01_historical_keys`). After this change is merged, Sprint 1 schema changes go through the owner of this change.
+- **One additive migration** (`s1_01_data_model`) creates 12 tables and all enums. The existing `initial` migration is never edited; once a migration is applied to a shared environment, later changes use corrective migrations. The review of the historical keys was folded into `s1_01_data_model` because it had not been applied anywhere yet. After this change is merged, Sprint 1 schema changes go through the owner of this change.
 - **Money is an `Int` number of cents** in fields whose names end in `Cents`. A 32-bit integer holds about R$ 21 million, which covers every value in the materials.
 - **ERP identity:** customers and products keep a unique text ERP code; receivables keep the ERP title number as a unique integer. Synchronization updates by these keys.
 - **Closed lists are database enums:** `Role`, `CustomerStatus` (`ACTIVE`, `BLOCKED`, `INACTIVE`, `PROSPECT`), `OrderStatus` (8 states), `ReceivableStatus`, `SyncKind`, `SyncResult`, `HistoricalItemStatus` and `HistoricalReceivableStatus` (adds `REVERSED`).

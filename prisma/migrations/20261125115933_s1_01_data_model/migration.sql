@@ -164,13 +164,11 @@ CREATE TABLE "contracts" (
 -- CreateTable
 CREATE TABLE "historical_order_items" (
     "id" TEXT NOT NULL,
-    "content_key" TEXT NOT NULL,
-    "occurrence" INTEGER NOT NULL DEFAULT 1,
     "order_number" INTEGER NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "customer_code" TEXT NOT NULL,
     "seller_name" TEXT NOT NULL,
-    "product_code" TEXT,
+    "product_code" TEXT NOT NULL,
     "description" TEXT,
     "unit" TEXT,
     "quantity" INTEGER NOT NULL,
@@ -269,13 +267,13 @@ CREATE INDEX "contracts_customer_id_idx" ON "contracts"("customer_id");
 CREATE INDEX "historical_order_items_order_number_idx" ON "historical_order_items"("order_number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "historical_order_items_content_key_occurrence_key" ON "historical_order_items"("content_key", "occurrence");
+CREATE UNIQUE INDEX "historical_order_items_order_number_product_code_key" ON "historical_order_items"("order_number", "product_code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "historical_receivables_title_id_key" ON "historical_receivables"("title_id");
 
 -- CreateIndex
 CREATE INDEX "historical_receivables_customer_code_idx" ON "historical_receivables"("customer_code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "historical_receivables_title_id_status_key" ON "historical_receivables"("title_id", "status");
 
 -- CreateIndex
 CREATE INDEX "load_issues_run_id_idx" ON "load_issues"("run_id");

@@ -40,3 +40,11 @@
 - [x] 6.3 Green: change `prisma/schema.prisma` (remove `contentKey` and `occurrence`, require `productCode`, add `@@unique([orderNumber, productCode])`, make `titleId` unique and remove `@@unique([titleId, status])`), generate the new corrective migration with `pnpm db:migrate --name s1_01_historical_keys` without editing applied migrations, and run `pnpm test:integration` until it passes.
 - [x] 6.4 Refactor and gates: run `pnpm format:check`, `pnpm typecheck`, `pnpm lint`, the strict OpenSpec validation, `pnpm build`, a database reset with seed and `pnpm test:integration`.
 - [x] 6.5 Update `docs/adr/0001-modelo-de-dados.md` and `docs/changes/s1-01-data-model.md`, check that no reference to the old keys remains, and add a "Changes after review" section to the pull request description.
+
+## 7. Review change: single migration
+
+Neither `s1_01_data_model` nor `s1_01_historical_keys` was applied to any shared environment, so they are not applied migrations yet and can be merged. The corrective migration dropped columns and set `NOT NULL`, which is not additive (AGENTS.md §Code Review Rules).
+
+- [x] 7.1 Replace the SQL of `20261125115933_s1_01_data_model` with the diff from the `develop` schema to the current `prisma/schema.prisma`, delete `20261125184249_s1_01_historical_keys`, and confirm the `initial` migration is unchanged and the new SQL has no `DROP` statement.
+- [x] 7.2 Refactor check: reset the local database with `pnpm prisma migrate reset`, run the seed, and run `pnpm test:integration`; behavior must not change.
+- [x] 7.3 Update `docs/adr/0001-modelo-de-dados.md` and `docs/changes/s1-01-data-model.md` so they describe one migration, and run `pnpm exec openspec validate s1-01-data-model --strict --no-interactive`.

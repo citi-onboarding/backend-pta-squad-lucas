@@ -18,7 +18,7 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 
 - Added the enums and 12 models to `prisma/schema.prisma`: `User`, `Session`, `Customer`, `Product`, `Receivable`, `SyncRun`, `Order`, `OrderItem`, `Contract`, `HistoricalOrderItem`, `HistoricalReceivable` and `LoadIssue`.
 - Added the migration `20261125115933_s1_01_data_model`. The `initial` migration is unchanged.
-- After review, added the corrective migration `20261125184249_s1_01_historical_keys`: it drops `content_key` and `occurrence`, makes `product_code` required, makes order items unique by (`order_number`, `product_code`) and historical receivables unique by `title_id`. No applied migration was edited.
+- After review, the historical keys changed: `content_key` and `occurrence` were removed, `product_code` became required, order items became unique by (`order_number`, `product_code`) and historical receivables unique by `title_id`. This first went into a corrective migration, `20261125184249_s1_01_historical_keys`, which dropped columns and was therefore not additive. Because neither migration had been applied to any shared environment, they were merged: `20261125115933_s1_01_data_model` now creates the final structure directly and the corrective migration was deleted.
 - Added `bcryptjs` (exact version) and a shared password-hashing function in `src/shared/security/password.ts`.
 - Extended `prisma/seed.ts` with the 8 prototype users (repeatable). The password comes from `SEED_USER_PASSWORD`; a test-only default is used outside production.
 - Regenerated the Prisma client in `src/shared/database/generated`.
@@ -45,11 +45,15 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 - After review (historical keys), on 2026-11-25:
   - Red: `pnpm test:integration` failed 10 of 54 tests, because the database still had the old keys; 44 passed.
   - Green: after the corrective migration and `pnpm db:generate`, `pnpm test:integration` passed 7 files and 54 tests.
-  - `pnpm prisma migrate reset` applied the three migrations to an empty database, `pnpm prisma db seed` created the 8 users, and `pnpm test:integration` passed 54 tests again.
+  - `pnpm prisma migrate reset` applied the three migrations (before they were merged) to an empty database, `pnpm prisma db seed` created the 8 users, and `pnpm test:integration` passed 54 tests again.
   - `pnpm format:check`, `pnpm typecheck`, `pnpm lint` and `pnpm build`: passed.
   - `pnpm exec openspec validate s1-01-data-model --strict --no-interactive` and `pnpm spec:validate`: passed.
   - `pnpm openapi:check` and `pnpm skills:check`: passed.
   - `pnpm verify` and `pnpm test:coverage`: all tests passed except the same 3 architecture tests that fail on the Windows development machine (see Implementation notes); because those fail, the coverage report was not printed locally. To be confirmed by the CI check on Linux.
+- After review (single migration), on 2026-11-26:
+  - `pnpm test:integration` passed 7 files and 54 tests.
+  - `pnpm prisma migrate reset --force` applied `20260813000000_initial` and `20261125115933_s1_01_data_model` to the local database, and `pnpm prisma db seed` created the 8 users.
+  - `pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code` reported no difference between the migrated database and the schema.
 
 ## Related artifacts
 
