@@ -61,5 +61,10 @@ describe("ERP code uniqueness", () => {
     await expect(
       database.customer.create({ data: { ...data, name: "Other name" } }),
     ).rejects.toMatchObject({ code: "P2002" });
+
+    const existing = await database.customer.findUniqueOrThrow({
+      where: { erpId: data.erpId },
+    });
+    expect(existing.name).toBe("Test Customer");
   });
 });

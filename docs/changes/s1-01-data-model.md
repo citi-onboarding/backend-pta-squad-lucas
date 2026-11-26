@@ -62,6 +62,10 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
   - `pnpm test:integration` passed 7 files and 54 tests.
   - `pnpm prisma migrate reset --force` applied `20260813000000_initial` and `20261125115933_s1_01_data_model` to the local database, and `pnpm prisma db seed` created the 8 users.
   - `pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code` reported no difference between the migrated database and the schema.
+- After review (unchanged customer on duplicate ERP code), on 2026-11-26:
+  - Red: with the expected name temporarily set to the duplicate's name (`"Other name"`), `pnpm exec vitest run --config vitest.integration.config.ts src/shared/database/erp-code-uniqueness.integration.test.ts` failed with `expected 'Test Customer' to be 'Other name'`. This proves the assertion reads the database; it does not simulate a production defect, because PostgreSQL rejects the insert atomically.
+  - Green: no production change; the same command passed.
+  - Refactor: no change; `pnpm test:integration` passed 7 files and 54 tests.
 
 ## Related artifacts
 
