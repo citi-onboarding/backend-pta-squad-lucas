@@ -49,3 +49,8 @@ The system SHALL tie every order to an existing customer and an existing seller.
 
 - **WHEN** an order is saved for a customer that does not exist
 - **THEN** the save is rejected
+
+#### Scenario: Order for a missing seller is rejected
+
+- **WHEN** an order is saved for a seller that does not exist
+- **THEN** the save is rejected

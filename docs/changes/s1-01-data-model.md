@@ -22,7 +22,7 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
 - Added `bcryptjs` (exact version) and a shared password-hashing function in `src/shared/security/password.ts`.
 - Extended `prisma/seed.ts` with the 8 prototype users (repeatable). The password comes from `SEED_USER_PASSWORD`; a test-only default is used outside production.
 - Regenerated the Prisma client in `src/shared/database/generated`.
-- Added Testcontainers integration tests (54 in total with the existing one, after review) and shared test support in `tests/support/`.
+- Added Testcontainers integration tests (55 in total with the existing one, after review) and shared test support in `tests/support/`.
 
 ## Resulting behavior
 
@@ -66,6 +66,11 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
   - Red: with the expected name temporarily set to the duplicate's name (`"Other name"`), `pnpm exec vitest run --config vitest.integration.config.ts src/shared/database/erp-code-uniqueness.integration.test.ts` failed with `expected 'Test Customer' to be 'Other name'`. This proves the assertion reads the database; it does not simulate a production defect, because PostgreSQL rejects the insert atomically.
   - Green: no production change; the same command passed.
   - Refactor: no change; `pnpm test:integration` passed 7 files and 54 tests.
+- After review (order for a missing seller), on 2026-11-26:
+  - Added the scenario "Order for a missing seller is rejected" to `specs/order-state-storage/spec.md`.
+  - Red: with the `orders_seller_id_fkey` foreign key temporarily removed from the migration, `pnpm exec vitest run --config vitest.integration.config.ts src/shared/database/order-state-storage.integration.test.ts -t "seller that does not exist"` failed because the order was saved instead of rejected. The migration was then reverted.
+  - Green: no production change; the same command passed.
+  - Refactor: no change; `pnpm test:integration` passed 7 files and 55 tests.
 
 ## Related artifacts
 

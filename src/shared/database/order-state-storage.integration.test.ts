@@ -143,4 +143,14 @@ describe("order identity and ownership", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("rejects an order for a seller that does not exist", async () => {
+    const { database } = testDatabase;
+    const owners = await createOwners();
+    await expect(
+      database.order.create({
+        data: orderData({ ...owners, sellerId: randomUUID() }),
+      }),
+    ).rejects.toThrow();
+  });
 });
