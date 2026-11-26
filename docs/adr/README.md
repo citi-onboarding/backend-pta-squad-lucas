@@ -21,8 +21,9 @@ Skip it for routine implementation details, formatting choices, or a local and r
 
 ## Index
 
-| Number | Title | Status | Superseded by |
-| ------ | ----- | ------ | ------------- |
+| Number | Title               | Status   | Superseded by |
+| ------ | ------------------- | -------- | ------------- |
+| 0001   | Sprint 1 data model | Proposed | —             |
 
 <!--
 Add one row per ADR, newest first.

@@ -18,6 +18,66 @@ export { Prisma }
 export * as $Enums from './enums.js'
 export * from './enums.js';
 /**
+ * Model User
+ * 
+ */
+export type User = Prisma.UserModel
+/**
+ * Model Session
+ * 
+ */
+export type Session = Prisma.SessionModel
+/**
+ * Model Customer
+ * 
+ */
+export type Customer = Prisma.CustomerModel
+/**
+ * Model Product
+ * 
+ */
+export type Product = Prisma.ProductModel
+/**
+ * Model Receivable
+ * 
+ */
+export type Receivable = Prisma.ReceivableModel
+/**
+ * Model SyncRun
+ * 
+ */
+export type SyncRun = Prisma.SyncRunModel
+/**
+ * Model Order
+ * 
+ */
+export type Order = Prisma.OrderModel
+/**
+ * Model OrderItem
+ * 
+ */
+export type OrderItem = Prisma.OrderItemModel
+/**
+ * Model Contract
+ * 
+ */
+export type Contract = Prisma.ContractModel
+/**
+ * Model HistoricalOrderItem
+ * 
+ */
+export type HistoricalOrderItem = Prisma.HistoricalOrderItemModel
+/**
+ * Model HistoricalReceivable
+ * 
+ */
+export type HistoricalReceivable = Prisma.HistoricalReceivableModel
+/**
+ * Model LoadIssue
+ * 
+ */
+export type LoadIssue = Prisma.LoadIssueModel
+/**
  * Model ExampleItem
  * 
  */
