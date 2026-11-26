@@ -77,18 +77,22 @@ change. Every phase change waits for explicit developer confirmation.
   - Note: one round on 2026-11-26 (about 20:07 Brazil time, after about 3 hours without calls from the developer): 643 ms, 250 ms, and 344 ms for the three reads. No evident slow start; a single round is not conclusive. The 60000 ms default stays and is revisited if a later round shows a slow first call.
 - [x] 4.4e Fix lint errors found by the pre-commit hook (`restrict-template-expressions` in `erp-error.ts` and `erp-smoke.ts`, `no-base-to-string` in `erp-smoke.test.ts`), with no behavior change
   - Note: `pnpm lint` was not run in the Green phases (3.8, 3b.9, 4.4c); only tests, typecheck, and formatting were. From now on `pnpm lint` is part of the verification of every phase.
-- [ ] 4.6 Write `docs/adr/0002-api-do-erp.md` from `docs/templates/adr.md`, recording confirmed facts, still-pending items, the retry policy, the 60-second timeout as an initial value with a single P7 observation, and the 33-call cost of a full read with page size 20; update the ADR index
+- [x] 4.6 Write `docs/adr/0002-api-do-erp.md` from `docs/templates/adr.md`, recording confirmed facts, still-pending items, the retry policy, the 60-second timeout as an initial value with a single P7 observation, and the 33-call cost of a full read with page size 20; update the ADR index
 
 ## 5. Refactor (Stage B)
 
-- [ ] 5.1 Improve naming, structure, and duplication in `src/shared/erp/` and test helpers without changing behavior
-- [ ] 5.2 Run `pnpm test` and `pnpm typecheck` and confirm everything stays green
+- [x] 5.1 Improve naming, structure, and duplication in `src/shared/erp/` and test helpers without changing behavior
+  - Done in `erp-smoke.ts` (typed page schema instead of a cast, one query constant, shorter `describeFailure`) and `erp-client.ts` (single `now()` read in `retryAfterMs`, `fieldNames` helper). Tests and test helpers untouched.
+  - Note: the `retryAfterMs` change (one `now()` read) is a small consistency improvement, not a pure reorganization: with a constant clock the result is identical, but with the real clock the comparison and the subtraction now use the same instant.
+- [x] 5.2 Run `pnpm test` and `pnpm typecheck` and confirm everything stays green
+- [x] 5.3 Add regression-guard tests for the production defaults of the client (`src/shared/erp/erp-client-defaults.test.ts`: global `fetch` wrapper, timer-based default sleep, and no-op logger, with `vi.stubGlobal` and fake timers, no real network). They pass immediately by design: there is no Red because the defaults already behave as specified. Added to raise function coverage above the 90% threshold without lowering it or recording an exception.
 
 ## 6. Consolidation (Stage B)
 
-- [ ] 6.1 Run the applicable gates with citi-verify-scope: `pnpm format:check`, `pnpm verify`, `pnpm test:coverage`, `pnpm build`, and `pnpm test:container`
-- [ ] 6.2 Run `openspec validate s1-02-erp-client --strict`
-- [ ] 6.3 Write `docs/changes/s1-02-erp-client.md` from `docs/templates/change.md` with citi-close-change
+- [x] 6.1 Run the applicable gates with citi-verify-scope: `pnpm format:check`, `pnpm verify`, `pnpm test:coverage`, `pnpm build`, and `pnpm test:container`
+  - Note: every applicable gate was run and its result recorded in `docs/changes/s1-02-erp-client.md`. `pnpm test:integration` and `pnpm test:container` also passed. Remaining failures are Windows-only and outside this change: 3 architecture tests, CRLF in 33 files (`format:check`), and CRLF in `openapi.json` (`openapi:check`); CI on Linux is the reference for them.
+- [x] 6.2 Run `openspec validate s1-02-erp-client --strict`
+- [x] 6.3 Write `docs/changes/s1-02-erp-client.md` from `docs/templates/change.md` with citi-close-change
 - [ ] 6.4 Review the branch with citi-review-change and address findings
 - [ ] 6.5 Prepare the pull request description with citi-prepare-pr, including test output and the ADR
 - [ ] 6.6 Obtain explicit developer confirmation before archiving the change

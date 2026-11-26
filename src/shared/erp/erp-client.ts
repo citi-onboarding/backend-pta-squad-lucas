@@ -150,10 +150,11 @@ export function createErpClient(options: ErpClientOptions): ErpClient {
       milliseconds = Number(value) * 1_000;
     } else {
       const date = Date.parse(value);
-      if (Number.isNaN(date) || date < now()) {
+      const currentTime = now();
+      if (Number.isNaN(date) || date < currentTime) {
         return undefined;
       }
-      milliseconds = date - now();
+      milliseconds = date - currentTime;
     }
     return Math.min(milliseconds, MAX_RETRY_AFTER_MS);
   }
@@ -202,16 +203,7 @@ async function readSafeErrorDetails(
       return {};
     }
     const record = body as Record<string, unknown>;
-    const fields = Array.isArray(record.erros)
-      ? record.erros.flatMap((entry: unknown) =>
-          typeof entry === "object" &&
-          entry !== null &&
-          "campo" in entry &&
-          typeof entry.campo === "string"
-            ? [entry.campo]
-            : [],
-        )
-      : [];
+    const fields = fieldNames(record.erros);
     return {
       ...(typeof record.requestId === "string"
         ? { requestId: record.requestId }
@@ -224,4 +216,19 @@ async function readSafeErrorDetails(
     // The error body is optional; its absence never changes the error kind.
     return {};
   }
+}
+
+// The `campo` strings of the `erros` entries; other entries are ignored.
+function fieldNames(erros: unknown): string[] {
+  if (!Array.isArray(erros)) {
+    return [];
+  }
+  return erros.flatMap((entry: unknown) =>
+    typeof entry === "object" &&
+    entry !== null &&
+    "campo" in entry &&
+    typeof entry.campo === "string"
+      ? [entry.campo]
+      : [],
+  );
 }

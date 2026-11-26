@@ -15,20 +15,32 @@ export interface ErpSmokeOptions {
   print: (line: string) => void;
 }
 
-const resources: { name: string; path: string; schema: z.ZodType }[] = [
+interface SmokePage {
+  dados: unknown[];
+  total: number;
+  totalPaginas: number;
+}
+
+const FIRST_ITEM_QUERY = "?pagina=1&tamanho=1";
+
+const resources: {
+  name: string;
+  path: string;
+  schema: z.ZodType<SmokePage>;
+}[] = [
   {
     name: "clientes",
-    path: "/v1/clientes?pagina=1&tamanho=1",
+    path: `/v1/clientes${FIRST_ITEM_QUERY}`,
     schema: erpPageSchema(erpCustomerSchema),
   },
   {
     name: "produtos",
-    path: "/v1/produtos?pagina=1&tamanho=1",
+    path: `/v1/produtos${FIRST_ITEM_QUERY}`,
     schema: erpPageSchema(erpProductSchema),
   },
   {
     name: "titulos",
-    path: "/v1/titulos?pagina=1&tamanho=1",
+    path: `/v1/titulos${FIRST_ITEM_QUERY}`,
     schema: erpPageSchema(erpReceivableSchema),
   },
 ];
@@ -39,10 +51,7 @@ export async function runErpSmoke(options: ErpSmokeOptions): Promise<boolean> {
   for (const resource of resources) {
     const startedAt = options.now();
     try {
-      const page = (await options.client.erpGet(
-        resource.path,
-        resource.schema,
-      )) as { dados: unknown[]; total: number; totalPaginas: number };
+      const page = await options.client.erpGet(resource.path, resource.schema);
       const elapsedMs = options.now() - startedAt;
       options.print(
         `${resource.name} elapsedMs=${String(elapsedMs)} records=${String(page.dados.length)} total=${String(page.total)} totalPaginas=${String(page.totalPaginas)}`,
@@ -59,25 +68,18 @@ function describeFailure(error: unknown): string {
   if (!(error instanceof ErpError)) {
     return "kind=unexpected";
   }
-  const parts = [`kind=${error.kind}`];
-  if (error.status !== undefined) {
-    parts.push(`status=${String(error.status)}`);
-  }
-  parts.push(`attempts=${String(error.attempts)}`);
-  if (error.title !== undefined) {
-    parts.push(`title=${error.title}`);
-  }
-  if (error.type !== undefined) {
-    parts.push(`type=${error.type}`);
-  }
-  if (error.requestId !== undefined) {
-    parts.push(`requestId=${error.requestId}`);
-  }
-  if (error.fields !== undefined) {
-    parts.push(`fields=${error.fields.join(",")}`);
-  }
-  if (error.issues !== undefined) {
-    parts.push(`issues=${error.issues.join(",")}`);
-  }
-  return parts.join(" ");
+  const facts: [string, string | number | string[] | undefined][] = [
+    ["kind", error.kind],
+    ["status", error.status],
+    ["attempts", error.attempts],
+    ["title", error.title],
+    ["type", error.type],
+    ["requestId", error.requestId],
+    ["fields", error.fields],
+    ["issues", error.issues],
+  ];
+  return facts
+    .filter(([, value]) => value !== undefined)
+    .map(([name, value]) => `${name}=${String(value)}`)
+    .join(" ");
 }
