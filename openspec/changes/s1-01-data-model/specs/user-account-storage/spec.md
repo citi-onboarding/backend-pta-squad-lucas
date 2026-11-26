@@ -76,12 +76,17 @@ The system SHALL record sessions of a user with their creation time, last use ti
 
 ### Requirement: Test users from the prototype
 
-The system SHALL provide, after seeding, one test user for each of the 8 people of the prototype, with e-mail in the form `firstname@distrilux.com.br`: sellers Patrícia Lins, Juliana Freitas, Carla Menezes, Rodrigo Albuquerque and Marcos Viana; manager Fernanda Cavalcanti; finance user Sérgio Barros; and administrator Lucas Moura.
+The system SHALL provide, after seeding, one test user for each of the 8 people of the prototype, with e-mail in the form `firstname@distrilux.com.br`: sellers Patrícia Lins, Juliana Freitas, Carla Menezes, Rodrigo Albuquerque and Marcos Viana; manager Fernanda Cavalcanti; finance user Sérgio Barros; and administrator Lucas Moura. Each seeded seller SHALL have an ERP name, so that it has a customer portfolio.
 
 #### Scenario: Seed creates all test users
 
 - **WHEN** the database is created from scratch and seeded
 - **THEN** 8 test users exist, covering the roles `SELLER` (5), `MANAGER`, `FINANCE` and `ADMIN`
+
+#### Scenario: Seeded sellers have an ERP name
+
+- **WHEN** the database is seeded
+- **THEN** every seeded seller has an ERP name
 
 #### Scenario: Seed is repeatable
 

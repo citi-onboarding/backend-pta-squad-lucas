@@ -71,6 +71,11 @@ Design the whole Sprint 1 database once, so that login, ERP synchronization and 
   - Red: with the `orders_seller_id_fkey` foreign key temporarily removed from the migration, `pnpm exec vitest run --config vitest.integration.config.ts src/shared/database/order-state-storage.integration.test.ts -t "seller that does not exist"` failed because the order was saved instead of rejected. The migration was then reverted.
   - Green: no production change; the same command passed.
   - Refactor: no change; `pnpm test:integration` passed 7 files and 55 tests.
+- After review (seeded sellers' ERP name), on 2026-11-26:
+  - The test "gives every seller an ERP name" had no scenario. Added "Each seeded seller SHALL have an ERP name" to the requirement "Test users from the prototype" and the scenario "Seeded sellers have an ERP name" to `specs/user-account-storage/spec.md`. The test was not changed.
+  - Red: with the seed temporarily storing no ERP name for sellers, `pnpm exec vitest run --config vitest.integration.config.ts src/shared/database/user-account-storage.integration.test.ts -t "gives every seller an ERP name"` failed on its assertion. The seed was then reverted.
+  - Green: no production change; the same command passed.
+  - Refactor: no change; `pnpm test:integration` passed 7 files and 55 tests.
 
 ## Related artifacts
 
