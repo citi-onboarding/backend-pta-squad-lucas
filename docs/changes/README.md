@@ -32,6 +32,7 @@ to date as the change evolves.
 | ------------------------- | ----------------------------- | ----------- | ------------ |
 | create-backend-foundation | Create the backend foundation | shipped     | —            |
 | s1-02-erp-client          | ERP read client               | in-progress | ADR-0002     |
+| s1-03-erp-sync            | ERP synchronization           | in-progress | ADR-0003     |
 
 <!--
 Add one row per change doc.

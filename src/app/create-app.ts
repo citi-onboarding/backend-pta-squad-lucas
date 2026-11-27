@@ -9,10 +9,16 @@ import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
 
+import { createErpSyncRouter } from "../modules/erp-sync/erp-sync.router.js";
+import type { ErpSyncService } from "../modules/erp-sync/erp-sync.service.js";
 import type { Environment } from "../shared/config/env.js";
 import type { Database } from "../shared/database/create-database.js";
 import { createOpenApiDocument } from "../shared/http/openapi.js";
 import { notFoundHandler, problemHandler } from "../shared/http/problem.js";
+import {
+  createBearerTokenRecognizer,
+  requireAdmin,
+} from "../shared/http/require-admin.js";
 import { createLogger } from "../shared/logging/logger.js";
 // <example-item-imports>
 import { ExampleItemRepository } from "../modules/example-items/example-item.repository.js";
@@ -23,12 +29,12 @@ import { ExampleItemService } from "../modules/example-items/example-item.servic
 interface CreateAppOptions {
   database: Database;
   environment: Environment;
+  // Shared with the scheduler so both respect the one-run-at-a-time rule.
+  erpSyncService: ErpSyncService;
 }
 
-export function createApp({
-  database,
-  environment,
-}: CreateAppOptions): Express {
+export function createApp(options: CreateAppOptions): Express {
+  const { database, environment } = options;
   const app = express();
   const logger = createLogger(environment);
   const openApiDocument = createOpenApiDocument();
@@ -98,6 +104,17 @@ export function createApp({
   );
   app.use("/api/v1/example-items", createExampleItemRouter(exampleItemService));
   // </example-item-routes>
+
+  // Administrator-only routes use the stopgap bearer token until login (F01) exists.
+  app.use(
+    "/api/v1/sync",
+    createErpSyncRouter({
+      service: options.erpSyncService,
+      adminGuard: requireAdmin(
+        createBearerTokenRecognizer(environment.ADMIN_API_TOKEN),
+      ),
+    }),
+  );
 
   app.use(notFoundHandler);
   app.use(problemHandler);

@@ -23,6 +23,14 @@ const envSchema = z.object({
     .positive()
     .max(120_000)
     .default(60_000),
+  // Only the exact strings are accepted: z.coerce.boolean() would read "false" as true.
+  ERP_SYNC_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
+  // Stopgap admin credential until login exists (F01). Optional: without it every
+  // administrator-only endpoint refuses all requests.
+  ADMIN_API_TOKEN: z.string().min(32).optional(),
 });
 
 export type Environment = z.infer<typeof envSchema> & { corsOrigins: string[] };
@@ -37,7 +45,8 @@ export function parseEnvironment(input: NodeJS.ProcessEnv): Environment {
     throw new Error("CORS_ORIGINS must contain at least one origin.");
   }
 
-  return { ...parsed, corsOrigins };
+  // The token key is always present (possibly undefined) so callers can read it.
+  return { ...parsed, ADMIN_API_TOKEN: parsed.ADMIN_API_TOKEN, corsOrigins };
 }
 
 export const env = parseEnvironment(process.env);

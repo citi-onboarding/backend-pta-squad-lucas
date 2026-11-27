@@ -8,7 +8,7 @@ import {
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import type { Environment } from "../../shared/config/env.js";
+import { createTestEnvironment } from "../../../tests/support/test-environment.js";
 import type { Database } from "../../shared/database/create-database.js";
 
 let container: StartedTestContainer;
@@ -41,20 +41,17 @@ describe("example items with PostgreSQL", () => {
     const { createDatabase } =
       await import("../../shared/database/create-database.js");
     const { createApp } = await import("../../app/create-app.js");
+    const { createDefaultErpSyncService } =
+      await import("../../app/erp-sync-runtime.js");
+    const { createLogger } = await import("../../shared/logging/logger.js");
     database = createDatabase(databaseUrl);
-    const environment: Environment = {
-      NODE_ENV: "test",
-      SERVER_HOST: "0.0.0.0",
-      SERVER_PORT: 3001,
-      LOG_LEVEL: "silent",
-      CORS_ORIGINS: "http://localhost:5173",
-      DATABASE_URL: databaseUrl,
-      ERP_API_URL: "https://erp.example.invalid",
-      ERP_API_KEY: "fake-erp-key-for-tests",
-      ERP_REQUEST_TIMEOUT_MS: 60_000,
-      corsOrigins: ["http://localhost:5173"],
-    };
-    app = createApp({ database, environment });
+    const environment = createTestEnvironment({ DATABASE_URL: databaseUrl });
+    const erpSyncService = createDefaultErpSyncService({
+      database,
+      environment,
+      logger: createLogger(environment),
+    });
+    app = createApp({ database, environment, erpSyncService });
   });
 
   afterAll(async () => {

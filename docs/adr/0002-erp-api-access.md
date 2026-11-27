@@ -53,7 +53,9 @@ Implemented by the OpenSpec change `s1-02-erp-client`
 - Closed status lists: customer `ATIVO`, `BLOQUEADO`, `INATIVO`; receivable `PAGO`,
   `EM_ABERTO`, `VENCIDO`.
 - Query parameters of the three lists. `tamanho` accepts 1 to 50 and `pagina` has a
-  minimum of 1; this came from the Swagger form, and no call reached the server.
+  minimum of 1; this came from the Swagger form, and no call reached the server. Update
+  (2026-11-27): the real ERP accepted `tamanho=50` on the first real synchronization (see
+  ADR 0003), so that value is now confirmed; the rest of this item is still documented only.
 - Receivables are listed only from 2026-10-01: receivables issued before that date are
   not available from the ERP.
 - The error schema `Problema` and `application/problem+json` error bodies. `429` is
@@ -106,7 +108,7 @@ Implemented by the OpenSpec change `s1-02-erp-client`
    everything costs 33 calls with page size 20 (6 + 3 + 24) and 15 calls with page size
    50 (3 customers + 2 products + 10 receivables). F02 part 3 should use page size 50,
    the documented maximum, and must confirm on its first real read that the server
-   accepts it.
+   accepts it. Confirmed on 2026-11-27: the real ERP accepted page size 50 (ADR 0003).
 8. **Receivable history starts on 2026-10-01.** Nothing built on this client, including
    any dashboard history, may assume older receivables exist in the ERP.
 9. **Manual smoke check.** `pnpm erp:smoke` makes 3 real calls (page size 1) and prints
@@ -135,7 +137,8 @@ Implemented by the OpenSpec change `s1-02-erp-client`
   fail until the spec and the enum are updated.
 - The 60000 ms timeout and the P7 conclusion rest on one measurement.
 - The `401`-before-validation order rests on one observation.
-- The 50-record page size is documented but not confirmed against the server.
+- ~~The 50-record page size is documented but not confirmed against the server.~~
+  Confirmed on 2026-11-27: the real ERP accepted `tamanho=50` (ADR 0003).
 
 ### Limitations and follow-ups
 
