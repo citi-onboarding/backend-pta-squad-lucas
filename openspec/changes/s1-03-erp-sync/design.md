@@ -98,10 +98,14 @@ count for the badge only. Rejected for now as it splits one meaning into two.
   request while a run exists gets `409`.
 
 Shutdown (no cancellation exists): on `SIGTERM` the scheduler is stopped first. Then the
-process waits for the run in progress for a bounded time (10 s) before closing the
-database. A run cut short stays without an end time and is completed as `FAILED
-(interrupted)` at the next startup (spec: "Interrupted runs are closed at startup"). Since
-all writes of a run are one transaction, an interruption never leaves half a run stored.
+process waits for the run in progress for at most 10 s. After that it goes on closing the
+HTTP server and the database; it does **not** force the process to exit, so a run still in
+progress may stay alive until its current ERP request ends. What such a run can still do
+once the database is closed was not verified. Its record keeps no end time and is
+completed as `FAILED (interrupted)` at the next startup (spec: "Interrupted runs are closed
+at startup"). Since all writes of a run are one transaction, an interruption never leaves
+half a run stored. Forcing the exit after the grace period is a deferred improvement (see
+"Future improvements").
 
 **D4. Admin guard without login.** `src/shared/http/` gets one function that builds an
 Express middleware from an injected `isAdministrator(request)` recognizer. Until F01, the
@@ -252,6 +256,8 @@ frozen:
   records, diffing against stored rows, and run bookkeeping) into smaller files. It is
   about 450 lines, but every part is covered by `erp-sync.service.test.ts`, so the split
   can be done later without changing behavior.
+- Call `process.exit` (or an equivalent forced close) after the 10 s grace period at
+  shutdown, so a run still in progress cannot keep the process alive.
 - Tidy the log messages of the service and the scheduler (names of fields and wording are
   slightly inconsistent between them). Tests assert only a few fields, so this is safe
   later.

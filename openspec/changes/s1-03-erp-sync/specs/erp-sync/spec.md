@@ -44,6 +44,36 @@ MUST stay in integer cents.
 - **WHEN** the ERP sends a receivable with no payment date and another with a payment date
 - **THEN** the first is stored with an empty payment date and the second with that date
 
+### Requirement: Bounded page reading
+
+The number of pages of a resource MUST be fixed by the first page the ERP answers and MUST
+NOT change if a later page announces another total. A resource that announces more than 100
+pages MUST make the run end as `FAILED` without reading any further page, of that resource
+or of another, and nothing from the run MUST be stored. A page with no records MUST end the
+read of that resource, even when more pages were announced; the records read before it are
+kept for the run. The error detail of a run that exceeded the limit MUST name the ERP path
+without a query string and the limit, and MUST NOT contain record values.
+
+#### Scenario: A later page announces another total
+
+- **WHEN** the first page of a resource announces 3 pages and the second page announces 10
+- **THEN** the run reads exactly 3 pages of that resource
+
+#### Scenario: More than 100 pages are announced
+
+- **WHEN** the first page of a resource announces 101 pages
+- **THEN** the run ends as `FAILED`, the ERP receives no further request after that first page, nothing is stored, and the detail names the path and says it announces more than 100 pages
+
+#### Scenario: Exactly 100 pages are announced
+
+- **WHEN** the first page of a resource announces 100 pages and every page has records
+- **THEN** the run reads all 100 pages and stores their records
+
+#### Scenario: A page with no records ends the read
+
+- **WHEN** the first page of a resource announces 3 pages, the second page has no records, and the third page would have records
+- **THEN** the run does not request the third page and keeps the records of the first page
+
 ### Requirement: Running twice never duplicates data
 
 Records MUST be matched by their unique ERP code (customer and product code, receivable

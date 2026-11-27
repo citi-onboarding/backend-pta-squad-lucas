@@ -38,9 +38,16 @@ class InMemoryRepository implements ErpSyncRepository {
   receivables = new Map<number, SyncedReceivable>();
   applied: SyncSnapshot[] = [];
   failNextApply: Error | undefined;
+  failNextStart: Error | undefined;
+  failNextFinish: Error | undefined;
   private sequence = 0;
 
   startRun(run: { kind: SyncKind; startedAt: Date }): Promise<string> {
+    if (this.failNextStart) {
+      const error = this.failNextStart;
+      this.failNextStart = undefined;
+      return Promise.reject(error);
+    }
     this.sequence += 1;
     const id = `run-${String(this.sequence)}`;
     this.runs.push({
@@ -57,6 +64,11 @@ class InMemoryRepository implements ErpSyncRepository {
   }
 
   finishRun(id: string, completion: RunCompletion): Promise<void> {
+    if (this.failNextFinish) {
+      const error = this.failNextFinish;
+      this.failNextFinish = undefined;
+      return Promise.reject(error);
+    }
     const run = this.runs.find((candidate) => candidate.id === id);
     if (run) {
       Object.assign(run, completion);
@@ -1033,5 +1045,151 @@ describe("waiting for the service to be idle", () => {
 
     expect(idle).toBe(true);
     expect(context.repository.runs[0]?.result).toBe("SUCCESS");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Requirement: Bounded page reading
+// ---------------------------------------------------------------------------
+
+describe("bounded page reading", () => {
+  function onlyCustomers() {
+    return setup({ customers: [], products: [], receivables: [] });
+  }
+
+  function customerPages(
+    context: ReturnType<typeof setup>,
+    totalPaginas: (page: number) => number,
+    records: (page: number) => unknown[] = (page) => [erpCustomer(page)],
+  ) {
+    context.erpState.pageBodies.set(CUSTOMERS, (page) => ({
+      dados: records(page),
+      pagina: page,
+      tamanho: 50,
+      total: 1,
+      totalPaginas: totalPaginas(page),
+    }));
+  }
+
+  function customerCalls(context: ReturnType<typeof setup>) {
+    return context.erpState.calls.filter((path) => path.startsWith(CUSTOMERS));
+  }
+
+  it("fixes the number of pages with the first page, whatever later pages announce", async () => {
+    const context = onlyCustomers();
+    customerPages(context, (page) => (page === 1 ? 3 : 10));
+
+    const run = await runToEnd(context);
+
+    expect(customerCalls(context)).toHaveLength(3);
+    expect(run.result).toBe("SUCCESS");
+    expect(context.repository.customers.size).toBe(3);
+  });
+
+  it("fails the run without reading more when more than 100 pages are announced", async () => {
+    const context = setup();
+    customerPages(context, () => 101);
+
+    const run = await runToEnd(context);
+
+    expect(run.result).toBe("FAILED");
+    expect(context.erpState.calls).toHaveLength(1);
+    expect(run.errorDetail).toContain(CUSTOMERS);
+    expect(run.errorDetail).toMatch(/more than 100 pages/);
+    expect(run.errorDetail).not.toContain("?");
+    expect(context.repository.storedCounts()).toEqual({
+      customers: 0,
+      products: 0,
+      receivables: 0,
+    });
+  });
+
+  it("reads exactly 100 announced pages", async () => {
+    const context = onlyCustomers();
+    customerPages(context, () => 100);
+
+    const run = await runToEnd(context);
+
+    expect(run.result).toBe("SUCCESS");
+    expect(customerCalls(context)).toHaveLength(100);
+    expect(context.repository.customers.size).toBe(100);
+  });
+
+  it("stops reading a resource at a page with no records and keeps what it read", async () => {
+    const context = onlyCustomers();
+    customerPages(
+      context,
+      () => 3,
+      (page) => (page === 2 ? [] : [erpCustomer(page)]),
+    );
+
+    const run = await runToEnd(context);
+
+    expect(customerCalls(context)).toHaveLength(2);
+    expect(run.result).toBe("SUCCESS");
+    expect([...context.repository.customers.keys()]).toEqual(["C1"]);
+  });
+
+  it("stops after a first page with no records even when more pages are announced", async () => {
+    const context = onlyCustomers();
+    customerPages(
+      context,
+      () => 5,
+      () => [],
+    );
+
+    const run = await runToEnd(context);
+
+    expect(customerCalls(context)).toHaveLength(1);
+    expect(run.result).toBe("SUCCESS");
+    expect(context.repository.customers.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Failures while recording runs
+// ---------------------------------------------------------------------------
+
+describe("failures while recording runs", () => {
+  // Regression guards: the service already handles both, and these tests keep it so.
+  it("rejects the start when the run cannot be recorded and runs again on the next call", async () => {
+    const context = setup();
+    context.repository.failNextStart = new Error(
+      "start failed for Padaria Reservada Ltda",
+    );
+
+    await expect(context.service.startRun("MANUAL")).rejects.toThrow(
+      "start failed",
+    );
+    const status = await context.service.getStatus();
+    const next = await runToEnd(context, "MANUAL");
+
+    expect(context.erpState.calls).not.toHaveLength(0);
+    expect(status.running).toBe(false);
+    expect(next.result).toBe("SUCCESS");
+    expect(context.repository.runs).toHaveLength(1);
+  });
+
+  it("still resolves, frees the slot, and logs only the error name when the end cannot be recorded", async () => {
+    const context = setup();
+    context.repository.failNextFinish = new Error(
+      "finish failed for Padaria Reservada Ltda",
+    );
+
+    const run = await runToEnd(context);
+
+    expect(run.result).toBe("SUCCESS");
+    expect(context.repository.runs[0]).toMatchObject({
+      finishedAt: null,
+      result: null,
+    });
+    const failure = context.logs.find((entry) => entry.level === "error");
+    expect(failure?.fields).toMatchObject({ errorName: "Error" });
+    expect(JSON.stringify(context.logs)).not.toContain("Padaria Reservada");
+    expect((await context.service.getStatus()).running).toBe(false);
+    const next = await context.service.startRun("AUTOMATIC");
+    expect(next).not.toBeNull();
+    await next?.completion;
+    expect(await context.service.recoverInterruptedRuns()).toBe(1);
   });
 });

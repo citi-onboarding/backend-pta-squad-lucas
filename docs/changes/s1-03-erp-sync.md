@@ -36,7 +36,9 @@ Web screens are a separate task in the web repository.
   job (`node-cron` 4.6.0) fires every 30 minutes and skips the tick when a run is already in
   progress. On startup, runs that never ended are completed as `FAILED` (interrupted). On
   shutdown the schedule stops and the process waits at most 10 seconds for a run in progress
-  (timer that does not hold the process). `createApp` and the scheduler share one service,
+  (timer that does not hold the process), then goes on closing the server and the database
+  without forcing the exit: a run still in progress may stay alive, and the next start
+  completes it as interrupted. `createApp` and the scheduler share one service,
   so the one-run-at-a-time rule holds for both.
 - **Endpoints** (`src/modules/erp-sync/erp-sync.router.ts`, `openapi.json` regenerated from
   the same Zod schemas): `GET /api/v1/sync/status` (open), `GET /api/v1/sync/runs`
@@ -81,6 +83,9 @@ Web screens are a separate task in the web repository.
   when no token is configured). `GET /api/v1/sync/runs` is newest first, with `limit` 50 by
   default and 100 at most (`400` otherwise).
 - A record removed from the ERP stays in the portal.
+- Reading is bounded: the first page fixes how many pages a resource has, a resource that
+  announces more than 100 pages makes the run end as `FAILED` before any further read, and a
+  page with no records ends the read of that resource.
 
 ## Impact
 
@@ -114,7 +119,7 @@ as checked out (`core.autocrlf=true`). The real ERP was not called by any of the
 
 | Command                                                 | Result                                                                                                                                                                                              |
 | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm test:coverage` (unit, integration tests excluded) | 25 files, 300 tests passed. Coverage over `src/shared/**`: statements 98.43%, branches 96.77%, functions 97.87%, lines 98.38% (limits 90, 85, 90, 90). Thresholds met.                              |
+| `pnpm test:coverage` (unit, integration tests excluded) | 25 files, 307 tests passed. Coverage over `src/shared/**`: statements 98.43%, branches 96.77%, functions 97.87%, lines 98.38% (limits 90, 85, 90, 90). Thresholds met.                              |
 | `vitest run --config vitest.integration.config.ts`      | 8 files, 63 tests passed (Testcontainers PostgreSQL, all migrations applied), 8 of them for this change.                                                                                            |
 | `pnpm typecheck` (`tsc --noEmit`) and `pnpm build`      | Passed.                                                                                                                                                                                             |
 | `pnpm lint` (`eslint .`)                                | Passed.                                                                                                                                                                                             |

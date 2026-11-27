@@ -95,6 +95,8 @@ export function createFakeErp(data: ErpData = sampleData()) {
     calls: [] as string[],
     failures: new Map<string, Error>(),
     overrides: new Map<string, unknown>(),
+    // Answers a path page by page, for cases where pages disagree with each other.
+    pageBodies: new Map<string, (page: number) => unknown>(),
     gate: undefined as Promise<void> | undefined,
   };
 
@@ -117,18 +119,24 @@ export function createFakeErp(data: ErpData = sampleData()) {
     }
     const page = Number(url.searchParams.get("pagina") ?? "1");
     const records = state.data[key];
-    const body = state.overrides.has(url.pathname)
-      ? state.overrides.get(url.pathname)
-      : {
-          dados: records.slice(
-            (page - 1) * state.perPage,
-            page * state.perPage,
-          ),
-          pagina: page,
-          tamanho: state.perPage,
-          total: records.length,
-          totalPaginas: Math.max(1, Math.ceil(records.length / state.perPage)),
-        };
+    const pageBody = state.pageBodies.get(url.pathname);
+    const body = pageBody
+      ? pageBody(page)
+      : state.overrides.has(url.pathname)
+        ? state.overrides.get(url.pathname)
+        : {
+            dados: records.slice(
+              (page - 1) * state.perPage,
+              page * state.perPage,
+            ),
+            pagina: page,
+            tamanho: state.perPage,
+            total: records.length,
+            totalPaginas: Math.max(
+              1,
+              Math.ceil(records.length / state.perPage),
+            ),
+          };
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       // Mirrors the real client: only field paths, never values.

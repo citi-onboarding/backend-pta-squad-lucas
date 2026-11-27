@@ -124,11 +124,21 @@ const RECEIVABLES_PATH = "/v1/titulos";
 // The documented maximum. The read follows the server's own `totalPaginas`, so a
 // smaller accepted size still works.
 const PAGE_SIZE = 50;
+// A resource announcing more pages than this fails the run: it bounds the quota one
+// run can spend (the real ERP needs 10 pages at most today).
+const MAX_PAGES = 100;
 
 // Records are checked one by one afterwards, so one bad record never drops a page.
 const looseListSchema = erpPageSchema(z.unknown());
 
 type Resource = "customers" | "products" | "receivables";
+
+class PageLimitError extends Error {
+  constructor(readonly path: string) {
+    super(`ERP list ${path} announces more than ${String(MAX_PAGES)} pages.`);
+    this.name = "PageLimitError";
+  }
+}
 
 interface Rejections {
   count: number;
@@ -198,6 +208,9 @@ function describeFailure(error: unknown): {
   result: SyncRunResult;
   detail: string;
 } {
+  if (error instanceof PageLimitError) {
+    return { result: "FAILED", detail: error.message };
+  }
   if (error instanceof ErpError) {
     if (error.kind === "http" && error.status === 429) {
       return {
@@ -232,8 +245,17 @@ export function createErpSyncService(
         `${path}?pagina=${String(page)}&tamanho=${String(PAGE_SIZE)}`,
         looseListSchema,
       );
+      if (page === 1) {
+        // The first page fixes the total; later pages cannot move it.
+        if (list.totalPaginas > MAX_PAGES) {
+          throw new PageLimitError(path);
+        }
+        totalPages = list.totalPaginas;
+      }
+      if (list.dados.length === 0) {
+        break;
+      }
       records.push(...list.dados);
-      totalPages = list.totalPaginas;
     }
     return records;
   }

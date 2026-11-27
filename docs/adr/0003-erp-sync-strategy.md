@@ -61,6 +61,10 @@ the change summary is `docs/changes/s1-03-erp-sync.md`.
    `PARTIAL`. The previous copy of a rejected record is kept. Run details and logs carry only
    the resource, a count, and field names. This answers the follow-up of ADR 0002 about one
    unknown status dropping a whole page. A body that is not a list at all fails the run.
+   Reading is bounded: the first page fixes how many pages a resource has, a resource that
+   announces more than 100 pages fails the run before any further read, and a page with no
+   records ends the read of that resource (spec `erp-sync`, "Bounded page reading"). The
+   real ERP needs 10 pages at most today.
 4. **Run results.** `SUCCESS`, `PARTIAL`, `FAILED`, and `RATE_LIMITED`. The last one is new:
    it is added to the `SyncResult` enum by the additive corrective migration
    `20261127120000_s1_03_sync_result_rate_limited`; the already merged
@@ -88,9 +92,14 @@ the change summary is `docs/changes/s1-03-erp-sync.md`.
    ERP client has no cancellation and no per-call deadline, and one read can take about 9
    minutes in the worst case (ADR 0002), so no HTTP request waits on it. This replaces the
    separate short-timeout client ADR 0002 suggested for interactive use. On shutdown the
-   scheduler stops first and the process waits at most 10 seconds for a run in progress
-   before closing the database; the transaction in decision 2 means a cut run stores nothing
-   from itself.
+   scheduler stops first and the process waits at most 10 seconds for a run in progress.
+   After that it goes on closing the HTTP server and the database; it does **not** force the
+   process to exit, so a run still in progress may stay alive until its current ERP request
+   ends. What such a run can still do once the database is closed was not verified. Its
+   record keeps no end time, and the next start completes it as `FAILED` (interrupted)
+   (decision 6). The single transaction of decision 2 means a run never stores half a
+   result. Forcing the exit after the grace period is a deferred improvement (see the
+   follow-ups).
 8. **Interim admin guard, replaced by F01.** Because login does not exist, the two
    administrator-only endpoints (`GET /api/v1/sync/runs` and `POST /api/v1/sync/run`) accept
    a static bearer token configured in `ADMIN_API_TOKEN` (at least 32 characters). The token
@@ -159,6 +168,34 @@ the change summary is `docs/changes/s1-03-erp-sync.md`.
 - Invalid ERP data is only logged at error level and shown as a `PARTIAL` run; there is no
   alerting infrastructure yet (the alert ADR 0002 asked for).
 - Retention of old `SyncRun` rows and pagination of the run list.
+- Call `process.exit` (or an equivalent forced close) after the 10 second grace period at
+  shutdown, so a run still in progress cannot keep the process alive (deferred; decision 7).
+- **B1** (independent review, **deferred** by the task owner; no code changed). If
+  `createApp` is called without `options.erpSyncService`, it builds a second service with
+  its own run control (`busy`), so the scheduler and `POST /api/v1/sync/run` could then run
+  at the same time and break the one-run-at-a-time rule (decision 6). Today `src/server.ts`
+  builds one service and passes it to both, so the running backend is correct, but no test
+  guarantees it. Suggested fix: make the parameter required, or test that the instance is
+  shared.
+
+### Known limits
+
+Recorded from the independent review; none of them is fixed by this change.
+
+- **No cooldown on `POST /api/v1/sync/run`.** The only protection is that one run happens
+  at a time. Whoever holds the administrator token can start a new run the moment the
+  previous one ends, and each run spends 15 or more calls of the shared ERP quota.
+- **New routes are public by default.** Administrator protection is applied route by route
+  (the router receives the guard and puts it on `GET /sync/runs` and `POST /sync/run`). A
+  route added to the sync router without it is open, and nothing denies by default or tests
+  for it. `GET /sync/status` is open on purpose (decision 8).
+- **Pagination without a snapshot.** The ERP lists are read page by page with no fixed view
+  of the data. A record inserted or changed while a run reads can move between pages and be
+  missed, or appear twice, in that run. Duplicates cannot reach the database (records are
+  matched by ERP code), and a missed record is picked up by a later run. Because the first
+  page fixes the number of pages, growth during a read is not followed either.
+- **Single instance.** An assumption, not a confirmed fact (decision 6): with several
+  instances each would run its own synchronization.
 
 ### Manual verification with the real ERP
 

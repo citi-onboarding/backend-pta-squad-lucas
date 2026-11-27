@@ -45,6 +45,19 @@ Added after Green: no test covered the wiring in `create-app.ts` and `server.ts`
 - [x] 3b.2 Green: `src/app/erp-sync-runtime.ts` (node-cron adapter, unref sleep, default service, runtime), `create-app.ts`, and `server.ts` (start recovers interrupted runs, shutdown stops the schedule and waits at most 10 s before closing the database)
 - [x] 3b.3 Verified: unit 298 passed, integration 63 passed, `tsc`, `eslint`, `openapi:check`, `openspec validate --strict`, `pnpm test:container` passed
 
+## 3c. Review round (independent review findings M1 to M3 and observations)
+
+SDD, Red, and Green for the review findings. Every phase change waits for the developer; the
+developer approved Red and Green together for M2 and M3.
+
+- [x] 3c.1 M2 SDD: new requirement "Bounded page reading" in `specs/erp-sync/spec.md` (page total fixed by the first page; more than 100 pages fails the run without reading the rest; a page with no records ends the read)
+- [x] 3c.2 M2 Red: failing tests for the four scenarios in `erp-sync.service.test.ts`, with page-by-page answers added to `tests/support/fake-erp.ts`
+- [x] 3c.3 M3: tests with the in-memory repository for a failure in `startRun` (the next call runs again) and a failure in `finishRun`
+- [x] 3c.4 M2 Green: bounded page reading in `erp-sync.service.ts`
+- [x] 3c.5 M1 (documentation only): ADR 0003 and `design.md` say what shutdown really does (waits up to 10 seconds, then goes on; the run may stay alive; the next start closes it as interrupted); `process.exit` after the grace period recorded as a deferred improvement
+- [x] 3c.6 Known limits recorded in ADR 0003: no cooldown on `POST /sync/run`, new routes are public by default, pagination without a snapshot, single instance
+- [x] 3c.7 B1 recorded in ADR 0003 and **deferred** by the task owner, with no code change: `createApp` called without `options.erpSyncService` builds a second service with its own run control (`busy`), so the scheduler and `POST /sync/run` could run at the same time; `server.ts` wires one shared service today, but no test guarantees it; suggested fix: make the parameter required, or test that the instance is shared
+
 ## 4. Refactor
 
 - [x] 4.1 Remove duplication with all tests green; no behavior change (one shared `createTestEnvironment` in `tests/support/test-environment.ts` replaces three copied `Environment` objects; assertions untouched)
