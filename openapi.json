@@ -114,6 +114,122 @@
           ],
           "additionalProperties": false
         }
+      },
+      "SyncStatus": {
+        "type": "object",
+        "properties": {
+          "lastSuccessfulSyncAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "running": {
+            "type": "boolean"
+          },
+          "erpAvailable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "lastSuccessfulSyncAt",
+          "running",
+          "erpAvailable"
+        ],
+        "additionalProperties": false
+      },
+      "SyncRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "AUTOMATIC",
+              "MANUAL"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "result": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "FAILED",
+              "RATE_LIMITED",
+              null
+            ]
+          },
+          "recordsRead": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "recordsChanged": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "errorDetail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "startedAt",
+          "finishedAt",
+          "result",
+          "recordsRead",
+          "recordsChanged",
+          "errorDetail"
+        ],
+        "additionalProperties": false
+      },
+      "StartedSyncRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "AUTOMATIC",
+              "MANUAL"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "startedAt"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {}
@@ -427,6 +543,201 @@
           },
           "404": {
             "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/sync/status": {
+      "get": {
+        "tags": [
+          "ERP Sync"
+        ],
+        "summary": "When the ERP data was last synchronized and whether the ERP answered",
+        "responses": {
+          "200": {
+            "description": "Synchronization status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lastSuccessfulSyncAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "running": {
+                      "type": "boolean"
+                    },
+                    "erpAvailable": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "lastSuccessfulSyncAt",
+                    "running",
+                    "erpAvailable"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sync/runs": {
+      "get": {
+        "tags": [
+          "ERP Sync"
+        ],
+        "summary": "List the latest synchronization runs (administrators only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Runs, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "AUTOMATIC",
+                          "MANUAL"
+                        ]
+                      },
+                      "startedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "finishedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "result": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "SUCCESS",
+                          "PARTIAL",
+                          "FAILED",
+                          "RATE_LIMITED",
+                          null
+                        ]
+                      },
+                      "recordsRead": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "recordsChanged": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "errorDetail": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "kind",
+                      "startedAt",
+                      "finishedAt",
+                      "result",
+                      "recordsRead",
+                      "recordsChanged",
+                      "errorDetail"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid limit"
+          },
+          "401": {
+            "description": "Administrator credentials are required"
+          }
+        }
+      }
+    },
+    "/api/v1/sync/run": {
+      "post": {
+        "tags": [
+          "ERP Sync"
+        ],
+        "summary": "Start a synchronization now (administrators only)",
+        "responses": {
+          "202": {
+            "description": "Run started; read its outcome from the run list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "AUTOMATIC",
+                        "MANUAL"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "startedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Administrator credentials are required"
+          },
+          "409": {
+            "description": "A synchronization is already in progress"
           }
         }
       }

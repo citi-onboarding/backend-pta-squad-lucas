@@ -1,22 +1,11 @@
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 
-import type { Environment } from "../shared/config/env.js";
+import { createTestEnvironment } from "../../tests/support/test-environment.js";
 import type { Database } from "../shared/database/create-database.js";
 import { createApp } from "./create-app.js";
 
-const environment: Environment = {
-  NODE_ENV: "test",
-  SERVER_HOST: "0.0.0.0",
-  SERVER_PORT: 3001,
-  LOG_LEVEL: "silent",
-  CORS_ORIGINS: "http://localhost:5173",
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test",
-  ERP_API_URL: "https://erp.example.invalid",
-  ERP_API_KEY: "fake-erp-key-for-tests",
-  ERP_REQUEST_TIMEOUT_MS: 60_000,
-  corsOrigins: ["http://localhost:5173"],
-};
+const environment = createTestEnvironment();
 
 function createDatabaseDouble() {
   return {

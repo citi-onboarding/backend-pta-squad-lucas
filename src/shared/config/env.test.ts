@@ -143,3 +143,68 @@ describe("parseEnvironment ERP configuration", () => {
     },
   );
 });
+
+describe("parseEnvironment ERP synchronization", () => {
+  it("enables automatic synchronization by default", () => {
+    expect(parseEnvironment(validEnvironment)).toMatchObject({
+      ERP_SYNC_ENABLED: true,
+    });
+  });
+
+  it.each([
+    ["true", true],
+    ["false", false],
+  ])("reads ERP_SYNC_ENABLED=%s", (value, expected) => {
+    expect(
+      parseEnvironment({ ...validEnvironment, ERP_SYNC_ENABLED: value }),
+    ).toMatchObject({ ERP_SYNC_ENABLED: expected });
+  });
+
+  it.each(["maybe", "1", "0", "", "TRUE"])(
+    "rejects %j as ERP_SYNC_ENABLED",
+    (value) => {
+      expect(() =>
+        parseEnvironment({ ...validEnvironment, ERP_SYNC_ENABLED: value }),
+      ).toThrow(/ERP_SYNC_ENABLED/);
+    },
+  );
+});
+
+describe("parseEnvironment admin token", () => {
+  const token = "t".repeat(32);
+
+  it("leaves the admin token undefined when it is not configured", () => {
+    expect(parseEnvironment(validEnvironment)).toMatchObject({
+      ADMIN_API_TOKEN: undefined,
+    });
+    expect(Object.keys(parseEnvironment(validEnvironment))).toContain(
+      "ADMIN_API_TOKEN",
+    );
+  });
+
+  it("accepts a token of exactly 32 characters", () => {
+    expect(
+      parseEnvironment({ ...validEnvironment, ADMIN_API_TOKEN: token }),
+    ).toMatchObject({ ADMIN_API_TOKEN: token });
+  });
+
+  it("rejects a token of 31 characters naming the setting", () => {
+    expect(() =>
+      parseEnvironment({
+        ...validEnvironment,
+        ADMIN_API_TOKEN: "t".repeat(31),
+      }),
+    ).toThrow(/ADMIN_API_TOKEN/);
+  });
+
+  it("does not echo a rejected token", () => {
+    const shortToken = "short-admin-token-must-not-leak";
+
+    const error = captureError(() =>
+      parseEnvironment({ ...validEnvironment, ADMIN_API_TOKEN: shortToken }),
+    );
+
+    expect(String(error)).toMatch(/ADMIN_API_TOKEN/);
+    expect(String(error)).not.toContain(shortToken);
+  });
+});

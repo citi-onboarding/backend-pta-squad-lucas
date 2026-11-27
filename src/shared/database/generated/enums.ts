@@ -63,7 +63,8 @@ export type SyncKind = (typeof SyncKind)[keyof typeof SyncKind]
 export const SyncResult = {
   SUCCESS: 'SUCCESS',
   PARTIAL: 'PARTIAL',
-  FAILED: 'FAILED'
+  FAILED: 'FAILED',
+  RATE_LIMITED: 'RATE_LIMITED'
 } as const
 
 export type SyncResult = (typeof SyncResult)[keyof typeof SyncResult]
