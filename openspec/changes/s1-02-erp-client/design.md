@@ -67,7 +67,8 @@ sleep, `Date.now`, and a no-op logger).
   and the rule does not depend on which `4xx` it is) and an
   invalid-response failure on `200` (retrying returns the same body and wastes quota).
 - At most 5 attempts in total. Backoff waits 2, 4, 8, and 16 seconds (worst case 30 s of
-  waiting). No jitter: a single backend process reads the ERP, so synchronized retries
+  waiting without `Retry-After`; when `Retry-After` is honored, each wait may reach the
+  60 s cap of D-3). No jitter: a single backend process reads the ERP, so synchronized retries
   across clients are not a concern yet.
 - Timeout: `AbortSignal.timeout(timeoutMs)` covers both the request and the body read.
   `timeoutMs` comes from `ERP_REQUEST_TIMEOUT_MS`, default 60000 — an initial value.
@@ -148,7 +149,7 @@ any received value are discarded, because Zod messages can quote received values
 
 `ERP_API_URL`: Zod URL restricted to the `https` protocol and refined to reject a
 trailing slash. `ERP_API_KEY`: `z.string().min(1)`. `ERP_REQUEST_TIMEOUT_MS`:
-`z.coerce.number().int().positive().default(60000)`. Zod issue messages name the path
+`z.coerce.number().int().positive().max(120_000).default(60000)`. Zod issue messages name the path
 (the variable) and never echo the received value for these fields.
 
 Where the new required variables must be provided, with non-secret fake values
