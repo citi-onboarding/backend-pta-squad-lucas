@@ -21,9 +21,10 @@ Skip it for routine implementation details, formatting choices, or a local and r
 
 ## Index
 
-| Number | Title               | Status   | Superseded by |
-| ------ | ------------------- | -------- | ------------- |
-| 0001   | Sprint 1 data model | Proposed | —             |
+| Number | Title                                                                               | Status   | Superseded by |
+| ------ | ----------------------------------------------------------------------------------- | -------- | ------------- |
+| 0001   | Sprint 1 data model                                                                 | Proposed | —             |
+| 0002   | [ERP API access contract, retry policy, and error handling](0002-erp-api-access.md) | Proposed | —             |
 
 <!--
 Add one row per ADR, newest first.

@@ -14,6 +14,8 @@ export function createLogger(
         paths: [
           "req.headers.authorization",
           "req.headers.cookie",
+          'req.headers["x-api-key"]',
+          'headers["x-api-key"]',
           "res.headers.set-cookie",
           "password",
           "token",
