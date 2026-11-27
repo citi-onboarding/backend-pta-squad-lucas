@@ -21,7 +21,7 @@ is F02 part 3.
 ## Change made
 
 - **Environment.** `ERP_API_URL` (absolute `https`, no trailing slash), `ERP_API_KEY`
-  (non-empty), and `ERP_REQUEST_TIMEOUT_MS` (positive integer, default 60000) are
+  (non-empty), and `ERP_REQUEST_TIMEOUT_MS` (positive integer up to 120000, default 60000) are
   validated at startup. Fake, non-secret values were added to the test setup, CI, Docker
   Compose, the container test script, and `.env.example`.
 - **Client.** `createErpClient` in `src/shared/erp/erp-client.ts` exposes
@@ -54,6 +54,10 @@ is F02 part 3.
   the last one the read fails with an ERP error that states the last failure and 5
   attempts. Each retry logs one warning with only the path without query string, the
   status or kind, the attempt number, and the wait.
+- A path that does not start with `/` is rejected with a `TypeError` before any request, so
+  the request target cannot change the host of the base URL; the message never contains
+  the path.
+- A request timeout above 120000 ms makes startup fail, naming `ERP_REQUEST_TIMEOUT_MS`.
 - Any other non-success status, such as `401`, `403`, `404`, or `422`, fails after one
   attempt without waiting.
 - A `200` body that does not match the schema fails without retrying, listing only field
@@ -71,6 +75,12 @@ is F02 part 3.
 - Retries consume the call quota shared by the whole squad. Reading everything costs 33
   calls with page size 20 and 15 with page size 50; F02 part 3 should use 50 and confirm
   that the server accepts it.
+- Upper bound for one read: about 9 minutes, computed as 5 attempts of up to 60 seconds
+  (300 s) plus 4 waits of up to 60 seconds, the `Retry-After` cap (240 s). With only
+  timeouts and the default backoff it is about 5.5 minutes. This is fine for background
+  synchronization only. The client has no cancellation or per-call deadline (fixed timeout
+  per client, default sleep not cancellable); F02 part 3 must use a separate client with a
+  shorter timeout for interactive use and handle shutdown (ADR 0002).
 - Receivables issued before 2026-10-01 are not available from the ERP (documented).
 - Not verified against a real ERP, and recorded as such in ADR 0002: a real `429`, a real
   `5xx`, the `Retry-After` format, and the per-minute limit. The first-call duration has
@@ -79,26 +89,26 @@ is F02 part 3.
 
 ## Validations executed
 
-Run on Windows on 2026-11-26, after the Refactor, with the working tree line endings as
+Run on Windows on 2026-11-26, after the review follow-ups (timeout ceiling and path check), with the working tree line endings as
 checked out (`core.autocrlf=true`). The real ERP was called only by the developer, once,
 through `pnpm erp:smoke`.
 
-| Command                                                             | Result                                                                                                                                                                                                                                                                                  |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Narrowest tests (`src/shared/erp`, `env.test.ts`, `logger.test.ts`) | 118 passed in 6 files                                                                                                                                                                                                                                                                   |
-| `pnpm typecheck`                                                    | Passed                                                                                                                                                                                                                                                                                  |
-| `pnpm lint`                                                         | Passed, zero errors                                                                                                                                                                                                                                                                     |
-| `pnpm build`                                                        | Passed                                                                                                                                                                                                                                                                                  |
-| `openspec validate s1-02-erp-client --strict`                       | Valid                                                                                                                                                                                                                                                                                   |
-| `pnpm spec:validate`                                                | Passed                                                                                                                                                                                                                                                                                  |
-| `pnpm skills:check`                                                 | Passed                                                                                                                                                                                                                                                                                  |
-| `pnpm test`                                                         | 158 passed, 3 failed: the architecture tests in `tests/architecture/boundaries.test.ts`, which fail on Windows only (fixture paths) and pass in CI (Linux). They failed before this change.                                                                                             |
-| `pnpm test:architecture`                                            | The same 3 failures                                                                                                                                                                                                                                                                     |
-| `pnpm openapi:check`                                                | Failed only because `openapi.json` has CRLF line endings in the Windows working tree; its content equals the generated document once CR is ignored. The file is not part of this change.                                                                                                |
-| `pnpm test:coverage`                                                | Failed only because of the 3 architecture tests. Excluding them (`vitest run --coverage --exclude '**/*.integration.test.ts' --exclude 'tests/architecture/**'`): 158 passed in 16 files, thresholds met: statements 98.17%, branches 96.29%, functions 97.43% (38 of 39), lines 98.1%. |
-| `pnpm format:check`                                                 | Failed on 33 files not touched by this change; all differ from Prettier output only by CRLF line endings. The files of this change pass Prettier.                                                                                                                                       |
-| `pnpm test:integration`                                             | Passed: 7 files, 55 tests (Testcontainers started its own PostgreSQL).                                                                                                                                                                                                                  |
-| `pnpm test:container`                                               | Passed: both images built, migrations `20260813000000_initial` and `20261125115933_s1_01_data_model` applied, and the API container started with the fake ERP settings (`Production container smoke test passed.`).                                                                     |
+| Command                                                             | Result                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Narrowest tests (`src/shared/erp`, `env.test.ts`, `logger.test.ts`) | 129 passed in 7 files                                                                                                                                                                                                                                                                    |
+| `pnpm typecheck`                                                    | Passed                                                                                                                                                                                                                                                                                   |
+| `pnpm lint`                                                         | Passed, zero errors                                                                                                                                                                                                                                                                      |
+| `pnpm build`                                                        | Passed                                                                                                                                                                                                                                                                                   |
+| `openspec validate s1-02-erp-client --strict`                       | Valid                                                                                                                                                                                                                                                                                    |
+| `pnpm spec:validate`                                                | Passed                                                                                                                                                                                                                                                                                   |
+| `pnpm skills:check`                                                 | Passed                                                                                                                                                                                                                                                                                   |
+| `pnpm test`                                                         | 167 passed, 3 failed: the architecture tests in `tests/architecture/boundaries.test.ts`, which fail on Windows only (fixture paths) and pass in CI (Linux). They failed before this change.                                                                                              |
+| `pnpm test:architecture`                                            | The same 3 failures                                                                                                                                                                                                                                                                      |
+| `pnpm openapi:check`                                                | Failed only because `openapi.json` has CRLF line endings in the Windows working tree; its content equals the generated document once CR is ignored. The file is not part of this change.                                                                                                 |
+| `pnpm test:coverage`                                                | Failed only because of the 3 architecture tests. Excluding them (`vitest run --coverage --exclude '**/*.integration.test.ts' --exclude 'tests/architecture/**'`): 167 passed in 16 files, thresholds met: statements 98.19%, branches 96.36%, functions 97.43% (38 of 39), lines 98.12%. |
+| `pnpm format:check`                                                 | Failed on 33 files not touched by this change; all differ from Prettier output only by CRLF line endings. The files of this change pass Prettier.                                                                                                                                        |
+| `pnpm test:integration`                                             | Passed: 7 files, 55 tests (Testcontainers started its own PostgreSQL).                                                                                                                                                                                                                   |
+| `pnpm test:container`                                               | Passed: both images built, migrations `20260813000000_initial` and `20261125115933_s1_01_data_model` applied, and the API container started with the fake ERP settings (`Production container smoke test passed.`).                                                                      |
 
 ## Related artifacts
 
@@ -107,7 +117,7 @@ through `pnpm erp:smoke`.
   delta in `specs/backend-foundation/spec.md`
 - Design: `openspec/changes/s1-02-erp-client/design.md`
 - Tasks: `openspec/changes/s1-02-erp-client/tasks.md`
-- ADR: `docs/adr/0002-api-do-erp.md` (proposed)
+- ADR: `docs/adr/0002-erp-api-access.md` (proposed)
 
 ## Usage
 

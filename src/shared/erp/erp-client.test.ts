@@ -207,9 +207,13 @@ describe("erpGet retry on transient failures", () => {
     expect(waits).toEqual([60_000]);
   });
 
+  // The client has no explicit branch for a negative number of seconds: a value such
+  // as "-5" is not a plain integer, so it is parsed as a date. `Date.parse` reads "-5"
+  // as a date in 2001, which is in the past, so it falls back for that reason. The case
+  // below names the mechanism that really applies instead of calling it "negative".
   it.each([
     ["unparseable", "soon"],
-    ["negative", "-5"],
+    ["a negative number read as a past date", "-5"],
     ["in the past", new Date(fixedNow - 10_000).toUTCString()],
   ])("falls back to backoff when Retry-After is %s", async (_label, value) => {
     const { client, waits } = setup([
@@ -382,6 +386,38 @@ describe("erpGet immediate failure on non-retryable responses", () => {
 
     expect(error.status).toBe(401);
     expect(error.requestId).toBeUndefined();
+  });
+});
+
+describe("erpGet path validation", () => {
+  it.each([
+    ["has no leading slash", "v1/clientes"],
+    ["is empty", ""],
+    ["starts with an at sign", "@other.example.invalid/v1/clientes"],
+    ["starts with a dot", ".other.example.invalid/v1/clientes"],
+  ])("rejects a path that %s without calling fetch", async (_label, path) => {
+    const { client, calls, waits } = setup([okResponse()]);
+
+    const error: unknown = await client.erpGet(path, okSchema).then(
+      () => undefined,
+      (rejection: unknown) => rejection,
+    );
+
+    expect(error).toBeInstanceOf(TypeError);
+    expect(error).not.toBeInstanceOf(ErpError);
+    expect(calls).toHaveLength(0);
+    expect(waits).toEqual([]);
+    const message = (error as Error).message;
+    expect(message).not.toContain("other.example.invalid");
+    expect(message).not.toContain("clientes");
+  });
+
+  it("still accepts a path that starts with a slash", async () => {
+    const { client, calls } = setup([okResponse()]);
+
+    await client.erpGet("/v1/clientes", okSchema);
+
+    expect(calls).toHaveLength(1);
   });
 });
 

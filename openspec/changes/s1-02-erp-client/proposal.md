@@ -68,5 +68,5 @@ amounts, which arrive in integer cents, as Brazilian reais (RN-13).
 - **Dependencies:** None added. Native `fetch` and `AbortSignal.timeout` on Node 22.
 - **Code:** `src/shared/config/env.ts`, `src/shared/logging/logger.ts`, and new files
   under `src/shared/erp/`.
-- **Documentation:** ADR `docs/adr/0002-api-do-erp.md` (named after the existing
-  `0001-modelo-de-dados.md` precedent) and `docs/changes/s1-02-erp-client.md`.
+- **Documentation:** ADR `docs/adr/0002-erp-api-access.md` (named after the existing
+  `0001-sprint-1-data-model.md` precedent) and `docs/changes/s1-02-erp-client.md`.

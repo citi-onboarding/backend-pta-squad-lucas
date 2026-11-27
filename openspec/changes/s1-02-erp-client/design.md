@@ -74,8 +74,9 @@ sleep, `Date.now`, and a no-op logger).
   A single smoke round (P7, 2026-11-26) took 643 ms for the first call and 250 to 344 ms
   for the next two, so no slow cold start was evident; the default stays and is revisited
   if a later round shows a slow first call.
-- Rejected: failing immediately on network errors. The ERP is known to drop and to be
-  slow on a cold start, which is exactly the case RN-15 covers.
+- Rejected: failing immediately on network errors. Retrying on network failures and slow
+  starts is a client requirement (RN-15), not an observed fact about the ERP: the only P7
+  measurement (643 ms for the first call) shows no slowness.
 - Only `GET` is retried. Reads are idempotent, so retrying cannot duplicate data (RN-15).
 
 ### D-3: `Retry-After` parsing
@@ -266,9 +267,13 @@ never run against the real ERP by automated tests or by the assistant. No new de
   customers (120), 2 for products (60), and 10 for receivables (472), so 15 calls
   instead of 33. Recorded in ADR 0002; F02 part 3 should use page size 50 and decides
   incremental reads.
-- [Worst-case latency: 5 timeouts of 60 s plus 30 s of backoff ≈ 5.5 minutes] →
-  Acceptable for background synchronization; any interactive use must pass a shorter
-  timeout or not call the ERP inline. Revisit if a later P7 round shows a slow first call.
+- [Worst-case latency: about 9 minutes, that is, 5 attempts of up to 60 s plus 4 waits of
+  up to 60 s (the `Retry-After` cap); about 5.5 minutes with timeouts and the default
+  backoff only] → Acceptable for background synchronization. Revisit if a later P7 round
+  shows a slow first call.
+- [No cancellation or per-call deadline: the timeout is fixed per client and the default
+  sleep cannot be cancelled] → F02 part 3 must create a separate client with a shorter
+  timeout for interactive use and must handle shutdown. Recorded in ADR 0002.
 - [Shared squad quota: retries consume calls of other teammates] → At most 5 attempts,
   honoring `Retry-After`; no retry on 4xx or invalid responses.
 - [New required variables break existing environments] → All automated environments get

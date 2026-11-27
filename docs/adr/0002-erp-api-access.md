@@ -81,8 +81,14 @@ Implemented by the OpenSpec change `s1-02-erp-client`
 3. **Timeout.** The default request timeout is 60000 ms (`ERP_REQUEST_TIMEOUT_MS`). It
    is an initial value with a single P7 observation behind it: the first call took
    643 ms, so no slow cold start was seen. It stays and is revisited if a later round
-   shows a slow first call. Worst case for one read is about 5.5 minutes (5 timeouts plus
-   30 seconds of backoff), acceptable for background synchronization only.
+   shows a slow first call. Upper bound for one read: about 9 minutes, computed as 5
+   attempts of up to 60 seconds each (300 s) plus 4 waits of up to 60 seconds each, the
+   cap on `Retry-After` (240 s); the case is a slow `429` that answers just before the
+   timeout and asks for the longest wait. With only timeouts and the default backoff the
+   bound is about 5.5 minutes (300 s plus 2 + 4 + 8 + 16 s). This is acceptable for
+   background synchronization only. The timeout setting is planned to have a ceiling of
+   120000 ms, which would make the absolute bound 5 x 120 s + 4 x 60 s = 840 s (14
+   minutes).
 4. **Every success body is validated** with Zod before use, regardless of media type.
    Unknown extra fields are accepted. An invalid body fails with an error that lists only
    field paths, never messages or received values.
@@ -113,7 +119,11 @@ Implemented by the OpenSpec change `s1-02-erp-client`
 - Transient ERP failures are absorbed without a custom behavior per module.
 - A contract change in the ERP (a new status, a missing field) fails loudly with the
   field path instead of reaching synchronization silently.
-- Error handling cannot leak the key, record data, or values repeated by the ERP.
+- Error handling does not leak the key, record data, or values repeated by the ERP. For
+  the error bodies actually observed (`401`, `404`, and `422`) this holds because only
+  `title`, `type`, `requestId`, and field names are kept; the `title` of a real `429` or
+  `5xx` body has not been observed (P5, pending), so the guarantee is not yet verified
+  for those.
 - Page size 50 cuts the cost of a full read from 33 to 15 calls of the shared quota.
 
 ### Negative
@@ -127,12 +137,32 @@ Implemented by the OpenSpec change `s1-02-erp-client`
 - The `401`-before-validation order rests on one observation.
 - The 50-record page size is documented but not confirmed against the server.
 
+### Limitations and follow-ups
+
+- **No cancellation or per-call deadline.** The timeout is fixed per client
+  (`ERP_REQUEST_TIMEOUT_MS`), and the default sleep cannot be cancelled. A caller cannot
+  abort a read, and a shutdown during a wait lets the read run until it ends. F02 part 3
+  must create a separate client with a shorter timeout for interactive use and must handle
+  shutdown.
+- **Requests that hit the timeout may still consume ERP quota** (not verified). The
+  retry budget counts them as attempts, but the ERP may count them as calls too.
+- **The body of a retried response is not consumed** before the next attempt (low
+  severity, deferred), which may keep the connection from being reused.
+- **One unknown status drops a whole page.** The closed status lists make a single
+  unexpected record fail the whole read. F02 part 3 should validate record by record, or
+  log a warning with only the field path, instead of discarding the page.
+- **`ErpError` is not mapped to an HTTP response yet.** F02 part 3 must define where it
+  becomes a safe response.
+- **"Fails loudly" depends on an alert that does not exist yet.** An invalid-response
+  error is only noticed if something raises it; F02 part 3 must create that alert.
+
 ## Alternatives considered
 
 ### Failing immediately on network errors
 
-Rejected: the ERP is known to drop connections and may be slow when idle, so retrying is
-the safer default for a read-only client.
+Rejected: retrying on network failures and slow starts is a requirement of the client
+(RN-15), not an observed fact about the ERP. The only first-call measurement (P7, 643 ms)
+shows no slowness. Retrying remains the safer default for a read-only client.
 
 ### Keeping `detail` and `erros[].mensagem` in errors for easier debugging
 

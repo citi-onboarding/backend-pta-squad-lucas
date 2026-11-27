@@ -50,6 +50,11 @@ export function createErpClient(options: ErpClientOptions): ErpClient {
     path: string,
     schema: T,
   ): Promise<z.output<T>> {
+    if (!path.startsWith("/")) {
+      // A programming error, not an ERP failure. The path is left out of the
+      // message because it may carry business data.
+      throw new TypeError('ERP path must start with "/".');
+    }
     const safePath = path.split("?")[0] ?? path;
     let failure: RetryableFailure | undefined;
 

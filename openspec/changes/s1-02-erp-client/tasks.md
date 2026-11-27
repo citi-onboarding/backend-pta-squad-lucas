@@ -61,8 +61,8 @@ change. Every phase change waits for explicit developer confirmation.
 
 ## 4. ERP verification (Stage B)
 
-- [x] 4.1 Developer verifies the maximum page size, the real `429` and `5xx` bodies, the `Retry-After` format and the per-minute limit (P6), and the first-call duration (P7) with the squad key and reports the findings (real `401` and `422` bodies already confirmed)
-  - Note: what was safe to verify was verified (real `401` and `422` bodies; page size limits documented from the Swagger form). The rest (real `429`, real `5xx`, `Retry-After` format, per-minute limit, P7) is deferred to ADR 0002 as not verified.
+- [x] 4.1 Verified what was safe (real `401` and `422` bodies, one first-call measurement); deferred the real `429`, the real `5xx`, the `Retry-After` format, and the per-minute limit to ADR 0002
+  - Note: the maximum page size is documented in the Swagger (`tamanho` 1 to 50), not verified against the server.
 - [x] 4.2 Update the `erp-integration` spec: move verified facts from pending to confirmed and adjust requirements and scenarios
   - Note: done for the verified facts (`401`, `422`, page size documented); deferred items stay under pending verification.
 - [x] 4.3 If behavior changes, run Red then Green again for the affected tests (error body, `Retry-After`)
@@ -77,7 +77,7 @@ change. Every phase change waits for explicit developer confirmation.
   - Note: one round on 2026-11-26 (about 20:07 Brazil time, after about 3 hours without calls from the developer): 643 ms, 250 ms, and 344 ms for the three reads. No evident slow start; a single round is not conclusive. The 60000 ms default stays and is revisited if a later round shows a slow first call.
 - [x] 4.4e Fix lint errors found by the pre-commit hook (`restrict-template-expressions` in `erp-error.ts` and `erp-smoke.ts`, `no-base-to-string` in `erp-smoke.test.ts`), with no behavior change
   - Note: `pnpm lint` was not run in the Green phases (3.8, 3b.9, 4.4c); only tests, typecheck, and formatting were. From now on `pnpm lint` is part of the verification of every phase.
-- [x] 4.6 Write `docs/adr/0002-api-do-erp.md` from `docs/templates/adr.md`, recording confirmed facts, still-pending items, the retry policy, the 60-second timeout as an initial value with a single P7 observation, and the 33-call cost of a full read with page size 20; update the ADR index
+- [x] 4.6 Write `docs/adr/0002-erp-api-access.md` from `docs/templates/adr.md`, recording confirmed facts, still-pending items, the retry policy, the 60-second timeout as an initial value with a single P7 observation, and the 33-call cost of a full read with page size 20; update the ADR index
 
 ## 5. Refactor (Stage B)
 
@@ -87,12 +87,27 @@ change. Every phase change waits for explicit developer confirmation.
 - [x] 5.2 Run `pnpm test` and `pnpm typecheck` and confirm everything stays green
 - [x] 5.3 Add regression-guard tests for the production defaults of the client (`src/shared/erp/erp-client-defaults.test.ts`: global `fetch` wrapper, timer-based default sleep, and no-op logger, with `vi.stubGlobal` and fake timers, no real network). They pass immediately by design: there is no Red because the defaults already behave as specified. Added to raise function coverage above the 90% threshold without lowering it or recording an exception.
 
+## 5b. Review follow-ups (Stage B)
+
+Review findings that change behavior follow the full cycle, with a developer checkpoint
+between phases; text-only findings and the B4 test adjustment are done outside it.
+
+- [x] 5b.1 Update the spec first: timeout ceiling of 120000 ms (B1) and path that must start with `/` (B2)
+- [x] 5b.2 Text-only follow-ups in ADR 0002, `design.md`, and the change document (worst case about 9 minutes, RN-15 as a requirement, no cancellation, softened leak guarantee, follow-ups for F02 part 3); rename the ADR to `0002-erp-api-access.md` and update every link
+- [x] 5b.3 B4: rename the `Retry-After` test case that was called "negative" so that it names the mechanism that really applies (the value is read as a past date); the case still passes
+- [x] 5b.4 Red: failing tests for the timeout ceiling (`env.test.ts`) and for rejecting a path without a leading slash (`erp-client.test.ts`)
+- [x] 5b.5 Developer reviews and approves the failing tests
+- [x] 5b.6 Green: add the `120000` ceiling to `ERP_REQUEST_TIMEOUT_MS` in `src/shared/config/env.ts`, and make `erpGet` reject a path without a leading slash before any request
+- [x] 5b.7 Run the narrowest tests, `pnpm lint`, `pnpm typecheck`, and `openspec validate s1-02-erp-client --strict`
+  - Result: 129 narrow tests passed; `pnpm test` 167 passed with only the 3 Windows architecture tests failing; coverage thresholds met (functions 97.43%); `pnpm lint`, `pnpm typecheck`, and `openspec validate --strict` pass; `pnpm test:integration` (55 tests) and `pnpm test:container` passed again.
+
 ## 6. Consolidation (Stage B)
 
 - [x] 6.1 Run the applicable gates with citi-verify-scope: `pnpm format:check`, `pnpm verify`, `pnpm test:coverage`, `pnpm build`, and `pnpm test:container`
   - Note: every applicable gate was run and its result recorded in `docs/changes/s1-02-erp-client.md`. `pnpm test:integration` and `pnpm test:container` also passed. Remaining failures are Windows-only and outside this change: 3 architecture tests, CRLF in 33 files (`format:check`), and CRLF in `openapi.json` (`openapi:check`); CI on Linux is the reference for them.
 - [x] 6.2 Run `openspec validate s1-02-erp-client --strict`
 - [x] 6.3 Write `docs/changes/s1-02-erp-client.md` from `docs/templates/change.md` with citi-close-change
-- [ ] 6.4 Review the branch with citi-review-change and address findings
+- [x] 6.4 Review the branch with citi-review-change and address findings
+  - Note: review done by an independent reviewer; findings M1, M2, M3, B1, B2, B4, B5, B6, and B7 were handled (see 5b). B3 (body of retried responses not consumed, low severity) was deferred and is recorded in ADR 0002 together with the F02 part 3 follow-ups.
 - [ ] 6.5 Prepare the pull request description with citi-prepare-pr, including test output and the ADR
 - [ ] 6.6 Obtain explicit developer confirmation before archiving the change

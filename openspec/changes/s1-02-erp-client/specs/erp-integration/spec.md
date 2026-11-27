@@ -119,7 +119,8 @@ The backend MUST require the ERP base URL and the ERP API key at startup and MUS
 to start when either is missing or invalid. The base URL MUST be an absolute `https` URL
 without a trailing slash. The API key MUST be a non-empty string. The per-request timeout
 MUST be configurable in a single setting, MUST be a positive integer number of
-milliseconds, and MUST default to 60000 when absent. Startup errors MUST name the
+milliseconds not greater than 120000, and MUST default to 60000 when absent. The ceiling
+keeps the worst-case duration of one read bounded. Startup errors MUST name the
 offending setting and MUST NOT print the value of the API key.
 
 #### Scenario: All ERP settings are valid
@@ -152,16 +153,36 @@ offending setting and MUST NOT print the value of the API key.
 - **WHEN** the backend starts with a request timeout that is zero, negative, or not an integer
 - **THEN** startup fails with an error naming `ERP_REQUEST_TIMEOUT_MS`
 
+#### Scenario: Timeout setting is above the ceiling
+
+- **WHEN** the backend starts with a request timeout of 120001 milliseconds or more
+- **THEN** startup fails with an error naming `ERP_REQUEST_TIMEOUT_MS`
+
+#### Scenario: Timeout setting is at the ceiling
+
+- **WHEN** the backend starts with a request timeout of exactly 120000 milliseconds
+- **THEN** startup succeeds and the request timeout is 120000 milliseconds
+
 ### Requirement: Authenticated ERP read
 
 Every ERP read MUST be an HTTP `GET` to the configured base URL followed by the requested
 path, including any query string supplied by the caller. Every ERP read MUST send the API
-key in the `X-Api-Key` request header and MUST NOT send it in the URL.
+key in the `X-Api-Key` request header and MUST NOT send it in the URL. The requested path
+MUST start with `/`, so that the request target can never change the host of the
+configured base URL (for example through a path that starts with `@` or `.`). A read of a
+path that does not start with `/` MUST be rejected as a programming error (a `TypeError`,
+not an ERP error) before any request is made, and the error message MUST NOT contain the
+path.
 
 #### Scenario: Successful read
 
 - **WHEN** the ERP answers `200` with a body that matches the expected shape
 - **THEN** the read returns the validated data after exactly one attempt
+
+#### Scenario: Path does not start with a slash
+
+- **WHEN** a read is requested for `v1/clientes`, for an empty path, or for a path such as `@other.example.invalid/v1/clientes` or `.other.example.invalid/v1/clientes`
+- **THEN** the read is rejected with a `TypeError` that is not an ERP error, no request is made, and the error message does not contain the path
 
 #### Scenario: Request target and credentials
 

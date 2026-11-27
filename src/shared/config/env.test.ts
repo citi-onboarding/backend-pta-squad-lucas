@@ -106,6 +106,27 @@ describe("parseEnvironment ERP configuration", () => {
     },
   );
 
+  it.each(["120001", "300000", "1e6"])(
+    "rejects a request timeout above the 120000 ms ceiling (%s)",
+    (timeout) => {
+      expect(() =>
+        parseEnvironment({
+          ...validEnvironment,
+          ERP_REQUEST_TIMEOUT_MS: timeout,
+        }),
+      ).toThrow(/ERP_REQUEST_TIMEOUT_MS/);
+    },
+  );
+
+  it("accepts a request timeout of exactly 120000 ms", () => {
+    const environment = parseEnvironment({
+      ...validEnvironment,
+      ERP_REQUEST_TIMEOUT_MS: "120000",
+    });
+
+    expect(environment.ERP_REQUEST_TIMEOUT_MS).toBe(120_000);
+  });
+
   it.each([
     ["an invalid base URL", { ERP_API_URL: "http://erp.example.invalid" }],
     ["an invalid timeout", { ERP_REQUEST_TIMEOUT_MS: "-1" }],

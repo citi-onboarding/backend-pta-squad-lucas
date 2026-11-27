@@ -17,7 +17,12 @@ const envSchema = z.object({
       message: "ERP_API_URL must not end with a slash.",
     }),
   ERP_API_KEY: z.string().min(1),
-  ERP_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  ERP_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(120_000)
+    .default(60_000),
 });
 
 export type Environment = z.infer<typeof envSchema> & { corsOrigins: string[] };
