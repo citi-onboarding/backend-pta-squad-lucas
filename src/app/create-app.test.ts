@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createTestEnvironment } from "../../tests/support/test-environment.js";
 import type { Database } from "../shared/database/create-database.js";
+import { createLogger } from "../shared/logging/logger.js";
 import { createApp } from "./create-app.js";
+import { createDefaultErpSyncService } from "./erp-sync-runtime.js";
 
 const environment = createTestEnvironment();
 
@@ -13,9 +15,18 @@ function createDatabaseDouble() {
   } as unknown as Database;
 }
 
+function createTestApp(database: Database) {
+  const erpSyncService = createDefaultErpSyncService({
+    database,
+    environment,
+    logger: createLogger(environment),
+  });
+  return createApp({ database, environment, erpSyncService });
+}
+
 describe("createApp", () => {
   it("serves liveness, readiness, and OpenAPI", async () => {
-    const app = createApp({ database: createDatabaseDouble(), environment });
+    const app = createTestApp(createDatabaseDouble());
     await request(app).get("/health/live").expect(200, { status: "ok" });
     await request(app).get("/health/ready").expect(200, { status: "ready" });
     const contract = await request(app).get("/openapi.json").expect(200);
@@ -27,21 +38,19 @@ describe("createApp", () => {
     vi.mocked(database.$queryRaw).mockRejectedValueOnce(
       new Error("unavailable"),
     );
-    await request(createApp({ database, environment }))
+    await request(createTestApp(database))
       .get("/health/ready")
       .expect(503, { status: "not-ready" });
   });
 
   it("uses Problem Details for unknown requests", async () => {
-    const app = createApp({ database: createDatabaseDouble(), environment });
+    const app = createTestApp(createDatabaseDouble());
     const missing = await request(app).get("/unknown").expect(404);
     expect(missing.body).toMatchObject({ title: "Not Found", status: 404 });
   });
 
   it("applies security and CORS headers", async () => {
-    const response = await request(
-      createApp({ database: createDatabaseDouble(), environment }),
-    )
+    const response = await request(createTestApp(createDatabaseDouble()))
       .get("/health/live")
       .set("x-request-id", "known-request-id")
       .set("origin", "http://localhost:5173")

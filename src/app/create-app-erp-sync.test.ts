@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import type {
   ErpSyncService,
@@ -134,16 +134,10 @@ describe("createApp ERP synchronization routes", () => {
     );
   });
 
-  // Regression guard: building the app must never reach the ERP, even when the
-  // caller does not inject a service. It passes by design.
-  it("makes no ERP request when the app is created without an injected service", () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-
-    createApp({
-      database: createDatabaseDouble(),
-      environment: createTestEnvironment({ ADMIN_API_TOKEN: adminToken }),
-    });
-
-    expect(fetchSpy).not.toHaveBeenCalled();
+  // The routes and the scheduler must share one service, or both could run at once.
+  it("requires the shared synchronization service", () => {
+    expectTypeOf<
+      Parameters<typeof createApp>[0]["erpSyncService"]
+    >().toEqualTypeOf<ErpSyncService>();
   });
 });

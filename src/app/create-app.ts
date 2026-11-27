@@ -20,7 +20,6 @@ import {
   requireAdmin,
 } from "../shared/http/require-admin.js";
 import { createLogger } from "../shared/logging/logger.js";
-import { createDefaultErpSyncService } from "./erp-sync-runtime.js";
 // <example-item-imports>
 import { ExampleItemRepository } from "../modules/example-items/example-item.repository.js";
 import { createExampleItemRouter } from "../modules/example-items/example-item.router.js";
@@ -31,7 +30,7 @@ interface CreateAppOptions {
   database: Database;
   environment: Environment;
   // Shared with the scheduler so both respect the one-run-at-a-time rule.
-  erpSyncService?: ErpSyncService;
+  erpSyncService: ErpSyncService;
 }
 
 export function createApp(options: CreateAppOptions): Express {
@@ -107,13 +106,10 @@ export function createApp(options: CreateAppOptions): Express {
   // </example-item-routes>
 
   // Administrator-only routes use the stopgap bearer token until login (F01) exists.
-  const erpSyncService =
-    options.erpSyncService ??
-    createDefaultErpSyncService({ database, environment, logger });
   app.use(
     "/api/v1/sync",
     createErpSyncRouter({
-      service: erpSyncService,
+      service: options.erpSyncService,
       adminGuard: requireAdmin(
         createBearerTokenRecognizer(environment.ADMIN_API_TOKEN),
       ),

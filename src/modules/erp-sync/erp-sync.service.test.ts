@@ -40,6 +40,7 @@ class InMemoryRepository implements ErpSyncRepository {
   failNextApply: Error | undefined;
   failNextStart: Error | undefined;
   failNextFinish: Error | undefined;
+  failNextRead: Error | undefined;
   private sequence = 0;
 
   startRun(run: { kind: SyncKind; startedAt: Date }): Promise<string> {
@@ -110,6 +111,11 @@ class InMemoryRepository implements ErpSyncRepository {
   }
 
   readSnapshot(): Promise<SyncSnapshot> {
+    if (this.failNextRead) {
+      const error = this.failNextRead;
+      this.failNextRead = undefined;
+      return Promise.reject(error);
+    }
     return Promise.resolve({
       customers: [...this.customers.values()],
       products: [...this.products.values()],
@@ -487,6 +493,23 @@ describe("a failed run keeps the previous copy", () => {
       products: 0,
       receivables: 0,
     });
+  });
+
+  it("logs the error name without its message when an unexpected error ends the run", async () => {
+    const context = setup();
+    context.repository.failNextRead = new TypeError(
+      "read failed for Padaria Reservada Ltda",
+    );
+
+    const run = await runToEnd(context);
+
+    expect(run.result).toBe("FAILED");
+    const failure = context.logs.find((entry) => entry.level === "error");
+    expect(failure?.fields).toMatchObject({
+      runId: run.id,
+      errorName: "TypeError",
+    });
+    expect(JSON.stringify(context.logs)).not.toContain("Padaria Reservada");
   });
 
   it("recovers on the next run", async () => {

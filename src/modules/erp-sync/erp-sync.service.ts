@@ -207,6 +207,7 @@ function describeRejections(
 function describeFailure(error: unknown): {
   result: SyncRunResult;
   detail: string;
+  unexpected?: true;
 } {
   if (error instanceof PageLimitError) {
     return { result: "FAILED", detail: error.message };
@@ -223,6 +224,7 @@ function describeFailure(error: unknown): {
   return {
     result: "FAILED",
     detail: "Unexpected error during synchronization.",
+    unexpected: true,
   };
 }
 
@@ -413,6 +415,12 @@ export function createErpSyncService(
       outcome = await synchronize();
     } catch (error) {
       const failure = describeFailure(error);
+      if (failure.unexpected) {
+        logger.error(
+          { runId: id, kind, errorName: errorName(error) },
+          "Unexpected error during ERP synchronization",
+        );
+      }
       outcome = {
         result: failure.result,
         recordsRead: 0,

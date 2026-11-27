@@ -41,9 +41,17 @@ describe("example items with PostgreSQL", () => {
     const { createDatabase } =
       await import("../../shared/database/create-database.js");
     const { createApp } = await import("../../app/create-app.js");
+    const { createDefaultErpSyncService } =
+      await import("../../app/erp-sync-runtime.js");
+    const { createLogger } = await import("../../shared/logging/logger.js");
     database = createDatabase(databaseUrl);
     const environment = createTestEnvironment({ DATABASE_URL: databaseUrl });
-    app = createApp({ database, environment });
+    const erpSyncService = createDefaultErpSyncService({
+      database,
+      environment,
+      logger: createLogger(environment),
+    });
+    app = createApp({ database, environment, erpSyncService });
   });
 
   afterAll(async () => {
