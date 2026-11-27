@@ -51,6 +51,18 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  User: 'User',
+  Session: 'Session',
+  Customer: 'Customer',
+  Product: 'Product',
+  Receivable: 'Receivable',
+  SyncRun: 'SyncRun',
+  Order: 'Order',
+  OrderItem: 'OrderItem',
+  Contract: 'Contract',
+  HistoricalOrderItem: 'HistoricalOrderItem',
+  HistoricalReceivable: 'HistoricalReceivable',
+  LoadIssue: 'LoadIssue',
   ExampleItem: 'ExampleItem'
 } as const
 
@@ -68,6 +80,199 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const UserScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  erpSellerName: 'erpSellerName',
+  lastLoginAt: 'lastLoginAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const SessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  lastUsedAt: 'lastUsedAt',
+  endedAt: 'endedAt'
+} as const
+
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+
+
+export const CustomerScalarFieldEnum = {
+  id: 'id',
+  erpId: 'erpId',
+  name: 'name',
+  cnpj: 'cnpj',
+  city: 'city',
+  state: 'state',
+  segment: 'segment',
+  status: 'status',
+  creditLimitCents: 'creditLimitCents',
+  erpSellerName: 'erpSellerName',
+  sellerId: 'sellerId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
+
+
+export const ProductScalarFieldEnum = {
+  id: 'id',
+  erpId: 'erpId',
+  description: 'description',
+  category: 'category',
+  unit: 'unit',
+  listPriceCents: 'listPriceCents',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
+
+
+export const ReceivableScalarFieldEnum = {
+  id: 'id',
+  erpId: 'erpId',
+  customerId: 'customerId',
+  erpOrderNumber: 'erpOrderNumber',
+  installment: 'installment',
+  amountCents: 'amountCents',
+  issuedAt: 'issuedAt',
+  dueDate: 'dueDate',
+  paidAt: 'paidAt',
+  status: 'status',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReceivableScalarFieldEnum = (typeof ReceivableScalarFieldEnum)[keyof typeof ReceivableScalarFieldEnum]
+
+
+export const SyncRunScalarFieldEnum = {
+  id: 'id',
+  kind: 'kind',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt',
+  result: 'result',
+  recordsRead: 'recordsRead',
+  recordsChanged: 'recordsChanged',
+  errorDetail: 'errorDetail'
+} as const
+
+export type SyncRunScalarFieldEnum = (typeof SyncRunScalarFieldEnum)[keyof typeof SyncRunScalarFieldEnum]
+
+
+export const OrderScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  sellerId: 'sellerId',
+  status: 'status',
+  totalCents: 'totalCents',
+  erpOrderNumber: 'erpOrderNumber',
+  sendKey: 'sendKey',
+  justification: 'justification',
+  rejectionReason: 'rejectionReason',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+export const OrderItemScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  productId: 'productId',
+  quantity: 'quantity',
+  unitPriceCents: 'unitPriceCents',
+  subtotalCents: 'subtotalCents'
+} as const
+
+export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const ContractScalarFieldEnum = {
+  id: 'id',
+  number: 'number',
+  customerId: 'customerId',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  noticeDays: 'noticeDays',
+  autoRenew: 'autoRenew',
+  paymentTerms: 'paymentTerms',
+  minVolumeCents: 'minVolumeCents',
+  hasAmendment: 'hasAmendment',
+  file: 'file',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContractScalarFieldEnum = (typeof ContractScalarFieldEnum)[keyof typeof ContractScalarFieldEnum]
+
+
+export const HistoricalOrderItemScalarFieldEnum = {
+  id: 'id',
+  orderNumber: 'orderNumber',
+  date: 'date',
+  customerCode: 'customerCode',
+  sellerName: 'sellerName',
+  productCode: 'productCode',
+  description: 'description',
+  unit: 'unit',
+  quantity: 'quantity',
+  unitPriceCents: 'unitPriceCents',
+  totalCents: 'totalCents',
+  status: 'status',
+  sourceRow: 'sourceRow',
+  corrections: 'corrections',
+  createdAt: 'createdAt'
+} as const
+
+export type HistoricalOrderItemScalarFieldEnum = (typeof HistoricalOrderItemScalarFieldEnum)[keyof typeof HistoricalOrderItemScalarFieldEnum]
+
+
+export const HistoricalReceivableScalarFieldEnum = {
+  id: 'id',
+  titleId: 'titleId',
+  customerCode: 'customerCode',
+  orderNumber: 'orderNumber',
+  installment: 'installment',
+  amountCents: 'amountCents',
+  issuedAt: 'issuedAt',
+  dueDate: 'dueDate',
+  paidAt: 'paidAt',
+  status: 'status',
+  corrections: 'corrections',
+  createdAt: 'createdAt'
+} as const
+
+export type HistoricalReceivableScalarFieldEnum = (typeof HistoricalReceivableScalarFieldEnum)[keyof typeof HistoricalReceivableScalarFieldEnum]
+
+
+export const LoadIssueScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  sourceFile: 'sourceFile',
+  rowNumber: 'rowNumber',
+  field: 'field',
+  problemType: 'problemType',
+  rawValue: 'rawValue',
+  resolution: 'resolution',
+  createdAt: 'createdAt'
+} as const
+
+export type LoadIssueScalarFieldEnum = (typeof LoadIssueScalarFieldEnum)[keyof typeof LoadIssueScalarFieldEnum]
 
 
 export const ExampleItemScalarFieldEnum = {
@@ -89,6 +294,14 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -103,4 +316,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

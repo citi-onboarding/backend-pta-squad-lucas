@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "SyncResult" ADD VALUE 'RATE_LIMITED';

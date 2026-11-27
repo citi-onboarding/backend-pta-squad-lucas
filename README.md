@@ -152,6 +152,16 @@ A clone where dependencies were never installed shows no CITi skills in Claude C
 
 Configuration is validated at startup. Keep real values in ignored `.env` files and secret stores. Do not commit credentials, log request bodies, or return stack traces and database errors to clients.
 
+### ERP smoke check
+
+`pnpm erp:smoke` is a manual check against the real ERP. It makes 3 calls of the shared ERP quota (customers, products, and receivables, page size 1) and prints, per resource, only the elapsed time in milliseconds, the record count, `total`, and `totalPaginas`. The elapsed time of the first call feeds the cold-start measurement (P7). It stops at the first failure and then prints only safe error facts (kind, status, attempts, `title`, `type`, `requestId`, and field names or paths). It never prints the API key, headers, or record data, and automated tests never run it.
+
+To run it without exposing the key:
+
+1. Put `ERP_API_URL`, `ERP_API_KEY`, and optionally `ERP_REQUEST_TIMEOUT_MS` in the ignored `.env` file, next to the other required variables such as `DATABASE_URL`. Do not pass the key on the command line or in shell history.
+2. Run `pnpm erp:smoke`. The script exits with a non-zero code when a read fails.
+3. Share only the printed lines. Do not paste `.env` or any other output.
+
 ## Docker
 
 ```bash

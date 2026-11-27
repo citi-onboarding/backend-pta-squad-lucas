@@ -7,6 +7,296 @@ datasource db {
   provider = "postgresql"
 }
 
+// ---------------------------------------------------------------------------
+// Sprint 1 data model (change: s1-01-data-model)
+// Money is always an integer number of cents (RN-13): fields end in "Cents".
+// Everything that comes from the ERP keeps a unique ERP code (RN-15, RN-16).
+// ---------------------------------------------------------------------------
+
+enum Role {
+  SELLER
+  MANAGER
+  FINANCE
+  ADMIN
+}
+
+enum CustomerStatus {
+  ACTIVE
+  BLOCKED
+  INACTIVE
+  PROSPECT
+}
+
+enum OrderStatus {
+  DRAFT
+  SENDING
+  SENT_TO_ERP
+  SEND_ERROR
+  CREDIT_BLOCKED
+  AWAITING_FINANCE
+  APPROVED
+  REJECTED
+}
+
+enum ReceivableStatus {
+  PAID
+  OPEN
+  OVERDUE
+}
+
+enum SyncKind {
+  AUTOMATIC
+  MANUAL
+}
+
+enum SyncResult {
+  SUCCESS
+  PARTIAL
+  FAILED
+  RATE_LIMITED
+}
+
+enum HistoricalItemStatus {
+  INVOICED
+  CANCELLED
+}
+
+enum HistoricalReceivableStatus {
+  PAID
+  OPEN
+  OVERDUE
+  REVERSED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  role          Role
+  // Name the seller has in the ERP; it defines the seller's portfolio.
+  erpSellerName String?   @unique @map("erp_seller_name")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  customers Customer[]
+  orders    Order[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime  @default(now()) @map("last_used_at")
+  endedAt    DateTime? @map("ended_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Customer {
+  id               String         @id @default(uuid())
+  erpId            String         @unique @map("erp_id")
+  name             String
+  cnpj             String
+  city             String
+  state            String
+  segment          String
+  status           CustomerStatus
+  creditLimitCents Int            @map("credit_limit_cents")
+  // Seller text exactly as the ERP sends it; sellerId is filled by matching it.
+  erpSellerName    String?        @map("erp_seller_name")
+  sellerId         String?        @map("seller_id")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  seller      User?        @relation(fields: [sellerId], references: [id])
+  receivables Receivable[]
+  orders      Order[]
+  contracts   Contract[]
+
+  @@index([cnpj])
+  @@index([sellerId])
+  @@map("customers")
+}
+
+model Product {
+  id             String   @id @default(uuid())
+  erpId          String   @unique @map("erp_id")
+  description    String
+  category       String
+  unit           String
+  listPriceCents Int      @map("list_price_cents")
+  active         Boolean
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Receivable {
+  id             String           @id @default(uuid())
+  erpId          Int              @unique @map("erp_id")
+  customerId     String           @map("customer_id")
+  erpOrderNumber Int              @map("erp_order_number")
+  installment    String
+  amountCents    Int              @map("amount_cents")
+  issuedAt       DateTime         @map("issued_at")
+  dueDate        DateTime         @map("due_date")
+  paidAt         DateTime?        @map("paid_at")
+  status         ReceivableStatus
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("receivables")
+}
+
+model SyncRun {
+  id             String      @id @default(uuid())
+  kind           SyncKind
+  startedAt      DateTime    @map("started_at")
+  finishedAt     DateTime?   @map("finished_at")
+  result         SyncResult?
+  recordsRead    Int         @default(0) @map("records_read")
+  recordsChanged Int         @default(0) @map("records_changed")
+  errorDetail    String?     @map("error_detail")
+
+  @@map("sync_runs")
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  customerId      String      @map("customer_id")
+  sellerId        String      @map("seller_id")
+  status          OrderStatus @default(DRAFT)
+  totalCents      Int         @map("total_cents")
+  erpOrderNumber  Int?        @map("erp_order_number")
+  // Idempotency key: the same order cannot be registered twice for sending.
+  sendKey         String      @unique @map("send_key")
+  justification   String?
+  rejectionReason String?     @map("rejection_reason")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  customer Customer    @relation(fields: [customerId], references: [id])
+  seller   User        @relation(fields: [sellerId], references: [id])
+  items    OrderItem[]
+
+  @@index([customerId])
+  @@index([sellerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String @id @default(uuid())
+  orderId        String @map("order_id")
+  productId      String @map("product_id")
+  quantity       Int
+  unitPriceCents Int    @map("unit_price_cents")
+  subtotalCents  Int    @map("subtotal_cents")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// The contract situation is computed from endDate and noticeDays (RN-11); it is
+// never stored.
+model Contract {
+  id             String   @id @default(uuid())
+  number         String   @unique
+  customerId     String   @map("customer_id")
+  startDate      DateTime @map("start_date")
+  endDate        DateTime @map("end_date")
+  noticeDays     Int      @map("notice_days")
+  autoRenew      Boolean  @map("auto_renew")
+  paymentTerms   String   @map("payment_terms")
+  // Minimum monthly volume, in cents.
+  minVolumeCents Int      @map("min_volume_cents")
+  hasAmendment   Boolean  @default(false) @map("has_amendment")
+  // Path of the contract document; the file itself is not stored in the database.
+  file           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("contracts")
+}
+
+model HistoricalOrderItem {
+  id             String               @id @default(uuid())
+  orderNumber    Int                  @map("order_number")
+  date           DateTime
+  customerCode   String               @map("customer_code")
+  sellerName     String               @map("seller_name")
+  // Required: the load resolves it from the description or records a LoadIssue.
+  productCode    String               @map("product_code")
+  description    String?
+  unit           String?
+  quantity       Int
+  unitPriceCents Int                  @map("unit_price_cents")
+  totalCents     Int                  @map("total_cents")
+  status         HistoricalItemStatus
+  sourceRow      Int?                 @map("source_row")
+  corrections    Json?
+  createdAt      DateTime             @default(now()) @map("created_at")
+
+  // The load merges repeated rows, so one order has each product once.
+  @@unique([orderNumber, productCode])
+  @@index([orderNumber])
+  @@map("historical_order_items")
+}
+
+model HistoricalReceivable {
+  id           String                     @id @default(uuid())
+  // The load merges a title and its reversal into one REVERSED record.
+  titleId      Int                        @unique @map("title_id")
+  customerCode String                     @map("customer_code")
+  orderNumber  Int                        @map("order_number")
+  installment  String
+  amountCents  Int                        @map("amount_cents")
+  issuedAt     DateTime                   @map("issued_at")
+  dueDate      DateTime                   @map("due_date")
+  paidAt       DateTime?                  @map("paid_at")
+  status       HistoricalReceivableStatus
+  corrections  Json?
+  createdAt    DateTime                   @default(now()) @map("created_at")
+
+  @@index([customerCode])
+  @@map("historical_receivables")
+}
+
+model LoadIssue {
+  id          String   @id @default(uuid())
+  runId       String   @map("run_id")
+  sourceFile  String   @map("source_file")
+  rowNumber   Int      @map("row_number")
+  field       String?
+  problemType String   @map("problem_type")
+  rawValue    String?  @map("raw_value")
+  resolution  String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([sourceFile, rowNumber, problemType])
+  @@index([runId])
+  @@map("load_issues")
+}
+
 // <example-item-model>
 model ExampleItem {
   id          String   @id @default(uuid())
@@ -17,4 +307,5 @@ model ExampleItem {
 
   @@map("example_items")
 }
+
 // </example-item-model>

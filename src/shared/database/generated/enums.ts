@@ -9,7 +9,80 @@
 * 🟢 You can import this file directly.
 */
 
+export const Role = {
+  SELLER: 'SELLER',
+  MANAGER: 'MANAGER',
+  FINANCE: 'FINANCE',
+  ADMIN: 'ADMIN'
+} as const
+
+export type Role = (typeof Role)[keyof typeof Role]
 
 
-// This file is empty because there are no enums in the schema.
-export {}
+export const CustomerStatus = {
+  ACTIVE: 'ACTIVE',
+  BLOCKED: 'BLOCKED',
+  INACTIVE: 'INACTIVE',
+  PROSPECT: 'PROSPECT'
+} as const
+
+export type CustomerStatus = (typeof CustomerStatus)[keyof typeof CustomerStatus]
+
+
+export const OrderStatus = {
+  DRAFT: 'DRAFT',
+  SENDING: 'SENDING',
+  SENT_TO_ERP: 'SENT_TO_ERP',
+  SEND_ERROR: 'SEND_ERROR',
+  CREDIT_BLOCKED: 'CREDIT_BLOCKED',
+  AWAITING_FINANCE: 'AWAITING_FINANCE',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+} as const
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
+
+
+export const ReceivableStatus = {
+  PAID: 'PAID',
+  OPEN: 'OPEN',
+  OVERDUE: 'OVERDUE'
+} as const
+
+export type ReceivableStatus = (typeof ReceivableStatus)[keyof typeof ReceivableStatus]
+
+
+export const SyncKind = {
+  AUTOMATIC: 'AUTOMATIC',
+  MANUAL: 'MANUAL'
+} as const
+
+export type SyncKind = (typeof SyncKind)[keyof typeof SyncKind]
+
+
+export const SyncResult = {
+  SUCCESS: 'SUCCESS',
+  PARTIAL: 'PARTIAL',
+  FAILED: 'FAILED',
+  RATE_LIMITED: 'RATE_LIMITED'
+} as const
+
+export type SyncResult = (typeof SyncResult)[keyof typeof SyncResult]
+
+
+export const HistoricalItemStatus = {
+  INVOICED: 'INVOICED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type HistoricalItemStatus = (typeof HistoricalItemStatus)[keyof typeof HistoricalItemStatus]
+
+
+export const HistoricalReceivableStatus = {
+  PAID: 'PAID',
+  OPEN: 'OPEN',
+  OVERDUE: 'OVERDUE',
+  REVERSED: 'REVERSED'
+} as const
+
+export type HistoricalReceivableStatus = (typeof HistoricalReceivableStatus)[keyof typeof HistoricalReceivableStatus]
