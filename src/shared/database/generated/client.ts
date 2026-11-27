@@ -102,6 +102,11 @@ export type HistoricalReceivable = Prisma.HistoricalReceivableModel
  */
 export type LoadIssue = Prisma.LoadIssueModel
 /**
+ * Model ChurnFeature
+ * 
+ */
+export type ChurnFeature = Prisma.ChurnFeatureModel
+/**
  * Model ExampleItem
  * 
  */

@@ -63,6 +63,7 @@ export const ModelName = {
   HistoricalOrderItem: 'HistoricalOrderItem',
   HistoricalReceivable: 'HistoricalReceivable',
   LoadIssue: 'LoadIssue',
+  ChurnFeature: 'ChurnFeature',
   ExampleItem: 'ExampleItem'
 } as const
 
@@ -273,6 +274,24 @@ export const LoadIssueScalarFieldEnum = {
 } as const
 
 export type LoadIssueScalarFieldEnum = (typeof LoadIssueScalarFieldEnum)[keyof typeof LoadIssueScalarFieldEnum]
+
+
+export const ChurnFeatureScalarFieldEnum = {
+  id: 'id',
+  customerCode: 'customerCode',
+  month: 'month',
+  ordersLast3m: 'ordersLast3m',
+  revenueLast3mCents: 'revenueLast3mCents',
+  revenuePrev3mCents: 'revenuePrev3mCents',
+  daysSinceLastOrder: 'daysSinceLastOrder',
+  overdueReceivables: 'overdueReceivables',
+  segment: 'segment',
+  churned90d: 'churned90d',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChurnFeatureScalarFieldEnum = (typeof ChurnFeatureScalarFieldEnum)[keyof typeof ChurnFeatureScalarFieldEnum]
 
 
 export const ExampleItemScalarFieldEnum = {

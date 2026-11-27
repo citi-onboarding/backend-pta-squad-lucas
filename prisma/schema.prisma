@@ -296,6 +296,27 @@ model LoadIssue {
   @@map("load_issues")
 }
 
+// Monthly Gold-layer behavioral features and 90-day churn outcome (S1-08, RN-18).
+// Monetary amounts are stored in integer cents (RN-13).
+model ChurnFeature {
+  id                 String   @id @default(uuid())
+  customerCode       String   @map("customer_code")
+  month              String
+  ordersLast3m       Int      @map("orders_last_3m")
+  revenueLast3mCents Int      @map("revenue_last_3m_cents")
+  revenuePrev3mCents Int      @map("revenue_prev_3m_cents")
+  daysSinceLastOrder Int?     @map("days_since_last_order")
+  overdueReceivables Int      @map("overdue_receivables")
+  segment            String
+  churned90d         Boolean? @map("churned_90d")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@unique([customerCode, month])
+  @@index([month])
+  @@map("churn_features")
+}
+
 // <example-item-model>
 model ExampleItem {
   id          String   @id @default(uuid())
