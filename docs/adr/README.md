@@ -21,11 +21,12 @@ Skip it for routine implementation details, formatting choices, or a local and r
 
 ## Index
 
-| Number | Title                                                                               | Status   | Superseded by |
-| ------ | ----------------------------------------------------------------------------------- | -------- | ------------- |
-| 0001   | Sprint 1 data model                                                                 | Proposed | —             |
-| 0002   | [ERP API access contract, retry policy, and error handling](0002-erp-api-access.md) | Proposed | —             |
-| 0003   | [ERP synchronization strategy and run results](0003-erp-sync-strategy.md)           | Proposed | —             |
+| Number | Title                                                                                        | Status   | Superseded by |
+| ------ | -------------------------------------------------------------------------------------------- | -------- | ------------- |
+| 0004   | [Historical data ingestion pipeline in Python with pandas](0004-historical-data-pipeline.md) | Proposed | —             |
+| 0003   | [ERP synchronization strategy and run results](0003-erp-sync-strategy.md)                    | Proposed | —             |
+| 0002   | [ERP API access contract, retry policy, and error handling](0002-erp-api-access.md)          | Proposed | —             |
+| 0001   | Sprint 1 data model                                                                          | Proposed | —             |
 
 <!--
 Add one row per ADR, newest first.
