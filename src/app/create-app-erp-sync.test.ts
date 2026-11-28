@@ -67,7 +67,9 @@ describe("createApp ERP synchronization routes", () => {
     expect(service.getStatus).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the run list for administrators", async () => {
+  // Administrator access by session is covered with PostgreSQL in
+  // create-app-role-authorization.integration.test.ts.
+  it("keeps the run list closed to missing, wrong and static tokens", async () => {
     const { app, service } = createTestApp();
 
     const withoutToken = await request(app).get("/api/v1/sync/runs");
@@ -80,11 +82,11 @@ describe("createApp ERP synchronization routes", () => {
 
     expect(withoutToken.status).toBe(401);
     expect(wrongToken.status).toBe(401);
-    expect(withToken.status).toBe(200);
-    expect(service.listRuns).toHaveBeenCalledTimes(1);
+    expect(withToken.status).toBe(401);
+    expect(service.listRuns).not.toHaveBeenCalled();
   });
 
-  it("lets only administrators start a manual run", async () => {
+  it("keeps the manual run closed to missing, wrong and static tokens", async () => {
     const { app, service } = createTestApp();
 
     const withoutToken = await request(app).post("/api/v1/sync/run");
@@ -98,8 +100,8 @@ describe("createApp ERP synchronization routes", () => {
 
     expect(withoutToken.status).toBe(401);
     expect(wrongToken.status).toBe(401);
-    expect(withToken.status).toBe(202);
-    expect(service.startRun).toHaveBeenCalledWith("MANUAL");
+    expect(withToken.status).toBe(401);
+    expect(service.startRun).not.toHaveBeenCalled();
   });
 
   it("refuses every administrator request when no token is configured, but still serves the status", async () => {

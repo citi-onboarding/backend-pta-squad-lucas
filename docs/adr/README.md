@@ -26,6 +26,7 @@ Skip it for routine implementation details, formatting choices, or a local and r
 | 0001   | Sprint 1 data model                                                                 | Proposed | —             |
 | 0002   | [ERP API access contract, retry policy, and error handling](0002-erp-api-access.md) | Proposed | —             |
 | 0003   | [ERP synchronization strategy and run results](0003-erp-sync-strategy.md)           | Proposed | —             |
+| 0004   | Opaque session tokens for authentication, delivered per client                      | Proposed | —             |
 
 <!--
 Add one row per ADR, newest first.

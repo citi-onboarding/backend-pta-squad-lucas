@@ -28,11 +28,13 @@ to date as the change evolves.
 
 ## Index
 
-| Change ID                 | Title                         | Status      | Related ADRs |
-| ------------------------- | ----------------------------- | ----------- | ------------ |
-| create-backend-foundation | Create the backend foundation | shipped     | —            |
-| s1-02-erp-client          | ERP read client               | in-progress | ADR-0002     |
-| s1-03-erp-sync            | ERP synchronization           | in-progress | ADR-0003     |
+| Change ID                 | Title                            | Status      | Related ADRs       |
+| ------------------------- | -------------------------------- | ----------- | ------------------ |
+| create-backend-foundation | Create the backend foundation    | shipped     | —                  |
+| s1-02-erp-client          | ERP read client                  | in-progress | ADR-0002           |
+| s1-03-erp-sync            | ERP synchronization              | in-progress | ADR-0003           |
+| s1-04-user-authentication | User authentication (backend)    | in-progress | ADR-0004           |
+| s1-04-role-authorization  | Role authorization (sync routes) | in-progress | ADR-0003, ADR-0004 |
 
 <!--
 Add one row per change doc.

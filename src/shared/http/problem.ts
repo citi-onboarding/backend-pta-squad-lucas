@@ -24,6 +24,14 @@ export const notFoundHandler: RequestHandler = (request, _response, next) => {
   );
 };
 
+function isUnparseableBody(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    "type" in error &&
+    error.type === "entity.parse.failed"
+  );
+}
+
 export const problemHandler: ErrorRequestHandler = (
   error: unknown,
   request,
@@ -49,16 +57,21 @@ export const problemHandler: ErrorRequestHandler = (
     return;
   }
 
+  // The parser error carries the raw body, so it is replaced and never logged.
+  const knownError = isUnparseableBody(error)
+    ? new HttpProblem(400, "Bad Request", "The request body is not valid JSON.")
+    : error;
+
   const problem =
-    error instanceof HttpProblem
-      ? error
+    knownError instanceof HttpProblem
+      ? knownError
       : new HttpProblem(
           500,
           "Internal Server Error",
           "An unexpected error occurred.",
         );
 
-  if (!(error instanceof HttpProblem)) {
+  if (!(knownError instanceof HttpProblem)) {
     request.log.error({ err: error }, "Unhandled request error");
   }
 

@@ -1,5 +1,7 @@
 import { readFile } from "node:fs/promises";
 
+import "../src/modules/authentication/authentication.openapi.js";
+
 // <example-item-openapi>
 import "../src/modules/example-items/example-item.openapi.js";
 // </example-item-openapi>

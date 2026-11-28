@@ -94,4 +94,6 @@ response after 5 attempts`, 0 read, `erpAvailable` false, `lastSuccessfulSyncAt`
 - [x] 6.3 (all passed on 2026-11-27; `format:check` only fails on CRLF in this Windows checkout) Run `pnpm format:check`, `pnpm verify`, `pnpm test:coverage`, `pnpm build`, `pnpm test:integration`, and `pnpm test:container`
 - [x] 6.4 Run `openspec validate s1-03-erp-sync --strict` and `pnpm spec:validate`
 - [ ] 6.5 Open the separate web task (badge and admin screen) in the web repository's backlog
-- [ ] 6.6 Obtain explicit confirmation immediately before archiving, then archive
+  - Still pending. The change was archived with this task open, which João explicitly accepted when confirming the archive; it was not done.
+- [x] 6.6 Obtain explicit confirmation immediately before archiving, then archive
+  - On 2026-11-27 João explicitly confirmed, immediately before the action, syncing the specs and archiving this change first and `s1-04-role-authorization` second. The `admin-access` (as reconciled by `s1-04-role-authorization` design D4), `available-credit` and `erp-sync` deltas were synced to `openspec/specs/`, then the change was moved to `openspec/changes/archive/2026-11-27-s1-03-erp-sync/`.

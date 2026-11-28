@@ -1,5 +1,5 @@
 import { openApiRegistry } from "../../shared/http/openapi.js";
-import { z } from "../../shared/http/openapi-zod.js";
+import "../../shared/http/problem-openapi.js";
 import {
   createExampleItemSchema,
   exampleItemIdSchema,
@@ -7,18 +7,6 @@ import {
   exampleItemSchema,
   updateExampleItemSchema,
 } from "./example-item.schemas.js";
-
-openApiRegistry.register(
-  "Problem",
-  z.object({
-    type: z.string(),
-    title: z.string(),
-    status: z.number().int(),
-    detail: z.string(),
-    instance: z.string(),
-    requestId: z.string(),
-  }),
-);
 
 const json = (
   schema: typeof exampleItemSchema | typeof exampleItemListSchema,
