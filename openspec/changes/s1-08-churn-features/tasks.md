@@ -20,5 +20,5 @@
 ## 5. Consolidation and Verification
 
 - [x] 5.1 Run full verification gates (`python -m pytest data/tests/ -v`, `pnpm format:check`, `pnpm typecheck`, `pnpm lint`, `pnpm verify`, `pnpm test:integration`, `openspec validate --all --strict --no-interactive`, and `pnpm build`).
-- [x] 5.2 Create `docs/changes/s1-08-churn-features.md` from `docs/templates/change.md` (recording that no new ADR is needed because `ADR-0001` and `ADR-0003` already govern the architecture).
+- [x] 5.2 Create `docs/changes/s1-08-churn-features.md` from `docs/templates/change.md` (recording that no new ADR is needed because `ADR-0001` and `ADR-0004` already govern the architecture).
 - [x] 5.3 Run `citi-review-change` and `citi-prepare-pr` (including the sample table screenshot and total churned customer count for the `01/12` ML workshop).

@@ -32,6 +32,8 @@ to date as the change evolves.
 | ------------------------- | ------------------------------------------ | ----------- | ------------ |
 | s1-08-churn-features      | Monthly customer churn feature computation | in-progress | ADR-0001     |
 | create-backend-foundation | Create the backend foundation              | shipped     | —            |
+| s1-02-erp-client          | ERP read client                            | in-progress | ADR-0002     |
+| s1-03-erp-sync            | ERP synchronization                        | in-progress | ADR-0003     |
 
 <!--
 Add one row per change doc.

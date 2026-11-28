@@ -38,8 +38,8 @@ See `proposal.md` for motivation and scope. `s1-01-data-model` merged the core S
 
 ### D4: No new ADR required
 
-- **Choice:** Reuse the architectural boundary already established in `ADR-0001` (integer cents, additive Prisma migrations, unique business keys) and `ADR-0003` (Python + pandas + psycopg writing to backend PostgreSQL).
-- **Rationale:** `s1-08-churn-features` introduces no new runtime, external dependency, or cross-cutting architectural boundary beyond `ADR-0001` and `ADR-0003`.
+- **Choice:** Reuse the architectural boundary already established in `ADR-0001` (integer cents, additive Prisma migrations, unique business keys) and `ADR-0004` (Python + pandas + psycopg writing to backend PostgreSQL).
+- **Rationale:** `s1-08-churn-features` introduces no new runtime, external dependency, or cross-cutting architectural boundary beyond `ADR-0001` and `ADR-0004`.
 
 ## Risks / Trade-offs
 

@@ -17,7 +17,7 @@ DistriLux currently notices customer churn only months after a buyer stops purch
 ## Change made
 
 - Added the additive Prisma model `ChurnFeature` (`@@map("churn_features")`, `@@unique([customerCode, month])`, `@@index([month])`) to `prisma/schema.prisma`, storing monetary amounts in integer cents (`RN-13`) and keeping `daysSinceLastOrder` (`Int?`) and `churned90d` (`Boolean?`) nullable.
-- Added the additive migration `prisma/migrations/20261126204800_s1_08_churn_features/migration.sql` and regenerated the Prisma client in `src/shared/database/generated/`.
+- Added the additive migration `prisma/migrations/20261127223500_s1_08_churn_features/migration.sql` and regenerated the Prisma client in `src/shared/database/generated/`.
 - Implemented `data/pipeline/churn_features.py` with:
   - Historical + ERP source unification (`unify_invoiced_orders`, `unify_receivables`) excluding `CANCELLED` historical items, unapproved portal orders, and `REVERSED` receivables, and deduplicating overlapping October 2026 receivables by title number with ERP precedence (`RN-09`).
   - Pure point-in-time monthly panel generation (`compute_churn_features`, `_compute_customer_month_row`, `_count_overdue_receivables_at`) from `2025-01` through the dataset cutoff month, preventing future data leakage for rolling windows (`ordersLast3m`, `revenueLast3mCents`, `revenuePrev3mCents`), `daysSinceLastOrder`, and `overdueReceivables`.
@@ -37,10 +37,10 @@ DistriLux currently notices customer churn only months after a buyer stops purch
 ## Impact
 
 - **API / OpenAPI:** No HTTP endpoints, Zod validation schemas, or OpenAPI contract changes.
-- **Database / Migrations:** Adds one strictly additive table (`churn_features`) via `20261126204800_s1_08_churn_features`; no existing tables or applied migrations are modified. Rollback is a corrective migration dropping `churn_features` (or truncating it) with zero effect on ERP or portal tables.
+- **Database / Migrations:** Adds one strictly additive table (`churn_features`) via `20261127223500_s1_08_churn_features`; no existing tables or applied migrations are modified. Rollback is a corrective migration dropping `churn_features` (or truncating it) with zero effect on ERP or portal tables.
 - **Security and privacy:** Reads database credentials from `--database-url` or `DATABASE_URL` without logging secrets, connection strings, or customer payloads.
 - **Observability:** CLI reports cutoff date, customer count, month count, total rows written, labeled vs. `null` rows, and distinct churned customers.
-- **ADR decision:** Not applicable — no ADR trigger in `docs/adr/README.md` fires because this change reuses the durable database contract established in `ADR-0001` (additive Prisma migrations, integer cents, composite unique keys) and the Python/pandas/psycopg pipeline boundary established in `ADR-0003` (`s1-07-history-load`), introducing no new dependency, runtime, or cross-cutting architectural boundary.
+- **ADR decision:** Not applicable — no ADR trigger in `docs/adr/README.md` fires because this change reuses the durable database contract established in `ADR-0001` (additive Prisma migrations, integer cents, composite unique keys), the ERP precedence contract in `ADR-0003`, and the Python/pandas/psycopg pipeline boundary established in `ADR-0004` (`s1-07-history-load`), introducing no new dependency, runtime, or cross-cutting architectural boundary.
 
 ## Validations executed
 
@@ -52,13 +52,17 @@ DistriLux currently notices customer churn only months after a buyer stops purch
   - `node node_modules/prisma/build/index.js generate` -> `Generated Prisma Client (7.10.1) to .\src\shared\database\generated in 522ms` (Exit code 0).
   - `.\node_modules\.bin\vitest.cmd run --config vitest.integration.config.ts src/shared/database/churn-feature-storage.integration.test.ts` -> Exit code 0 (`Test Files 1 passed (1), Tests 3 passed (3)`).
 - **Refactor (Python):** `.\data\.venv\Scripts\python.exe -m pytest data/tests/test_churn_features.py -v` -> Exit code 0 (`10 passed in 8.68s`).
-- **Verification gates:**
-  - `.\node_modules\.bin\prettier.cmd --check openspec/changes/s1-08-churn-features/ src/shared/database/churn-feature-storage.integration.test.ts` -> `All matched files use Prettier code style!` (Exit code 0).
+- **End-to-end execution against ERP + historical PostgreSQL 17 (2 consecutive runs):**
+  - Executed `.\data\.venv\Scripts\python.exe -m data.pipeline.churn_features --database-url "postgresql://postgres:postgres@localhost:5433/node_boilerplate" --cutoff-date 2026-09-30` twice sequentially against the populated database (`665` ERP records + `23,545` historical records):
+    - Run 1: `[PERSISTED] cutoff=2026-09-30 | customers=120 | months=21 | rows=2520 | labeled=2128 (churn=True: 218, churn=False: 1910) | null=392 | distinct_churned_customers=34`
+    - Run 2: `[PERSISTED] cutoff=2026-09-30 | customers=120 | months=21 | rows=2520 | labeled=2128 (churn=True: 218, churn=False: 1910) | null=392 | distinct_churned_customers=34` (`SELECT COUNT(*) FROM churn_features` remained `2520`).
+  - Also verified with default inferred cutoff across October–November 2026 ERP receivables (`cutoff=2026-11-27`): `2,760` rows (`120 × 23` months) across both runs, `35` distinct churned customers.
+- **Verification gates (after merging `develop`):**
+  - `.\node_modules\.bin\prettier.cmd --check openspec/changes/s1-08-churn-features/ docs/changes/s1-08-churn-features.md docs/changes/README.md src/shared/database/churn-feature-storage.integration.test.ts` -> `All matched files use Prettier code style!` (Exit code 0).
   - `.\node_modules\.bin\tsc.cmd --noEmit` -> Exit code 0.
   - `.\node_modules\.bin\tsc.cmd -p tsconfig.build.json` -> Exit code 0.
-  - `.\node_modules\.bin\eslint.cmd src/shared/database/churn-feature-storage.integration.test.ts` -> Exit code 0.
-  - `.\node_modules\.bin\vitest.cmd run --exclude '**/*.integration.test.ts' --exclude 'tests/architecture/**'` -> Exit code 0 (`Test Files 11 passed (11), Tests 42 passed (42)`).
-  - `.\node_modules\.bin\openspec.cmd validate --all --strict --no-interactive` -> Exit code 0 (`Totals: 3 passed, 0 failed`).
+  - `.\node_modules\.bin\vitest.cmd run tests/architecture` -> Exit code 0 (`1 passed, 3 passed`).
+  - `.\node_modules\.bin\openspec.cmd validate --all --strict --no-interactive` -> Exit code 0 (`Totals: 5 passed, 0 failed`).
   - `node scripts/check-agent-skills.mjs` -> Exit code 0.
 
 ## Related artifacts
@@ -85,5 +89,5 @@ Sprint 2 ML training queries labeled rows via `SELECT * FROM churn_features WHER
 
 ## Implementation notes
 
-- On Windows development machines, `tests/architecture/boundaries.test.ts` and repository-wide CRLF checks (`prettier --check .`, `openapi:check` on untouched LF files) exhibit known Windows path/CRLF behavior already documented in `docs/changes/s1-01-data-model.md`; Linux CI (`ubuntu-latest`) validates those gates cleanly.
-- End-to-end execution against the populated DistriLux database depends on `s1-03-erp-sync` and `s1-07-history-load` merging into `develop`.
+- Running on Windows with `core.autocrlf=true` produces CRLF warnings on untouched files during global `pnpm format:check`; all files modified in this branch pass Prettier.
+- Because the DistriLux ERP API exposes `/v1/clientes`, `/v1/produtos`, and `/v1/titulos` (no historical/October order endpoint) while portal orders (`orders`) begin empty until sellers submit orders, passing `--cutoff-date 2026-09-30` evaluates the 21-month historical order window (`34` distinct churned customers, matching PRD §1/§3.3). Once portal orders populate October 2026+, omitting `--cutoff-date` automatically advances the panel horizon.

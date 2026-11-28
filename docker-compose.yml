@@ -7,6 +7,9 @@ services:
       SERVER_PORT: 3001
       LOG_LEVEL: info
       CORS_ORIGINS: http://localhost:5173
+      ERP_API_URL: https://erp.example.invalid
+      ERP_API_KEY: fake-erp-key-for-tests
+      ERP_SYNC_ENABLED: "false"
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/node_boilerplate?schema=public
     ports:
       - "3001:3001"
