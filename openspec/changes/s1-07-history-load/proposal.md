@@ -10,13 +10,13 @@ All DistriLux commercial and financial activity prior to October 2026 exists onl
 - Enforce ERP precedence (RN-09) when auditing the commercial customers spreadsheet against synchronized ERP customer records, never overwriting ERP tables.
 - Reconcile duplicate historical records and receivable reversal pairs (`PAID` + `REVERSED`) before persistence, preserve cancelled order items marked outside sales totals, and persist idempotently by natural keys (RN-16).
 - Produce a per-file reconciliation summary verifying `read = loaded + discarded + pending` for each source file.
-- Record the architectural decision to run the Python/pandas pipeline against the backend PostgreSQL database in `docs/adr/0003-pipeline-de-dados.md`.
+- Record the architectural decision to run the Python/pandas pipeline against the backend PostgreSQL database in `docs/adr/0004-historical-data-pipeline.md`.
 
 ### In Scope
 
 - Historical data cleaning, normalization, deduplication, ERP matching, reconciliation reporting, and idempotent persistence for the three pre-October 2026 spreadsheets.
 - Local `--dry-run` audit mode (in-memory store) and PostgreSQL `UPSERT` mode (`--database-url`) targeting `historical_order_items`, `historical_receivables`, and `load_issues`.
-- Automated unit and pipeline tests (`pytest`) and ADR-0003.
+- Automated unit and pipeline tests (`pytest`) and ADR-0004.
 
 ### Out of Scope (Non-Goals)
 
@@ -43,5 +43,5 @@ All DistriLux commercial and financial activity prior to October 2026 exists onl
 - **Database / Migrations:** No new Prisma migration in this change; writes idempotently to `historical_order_items`, `historical_receivables`, and `load_issues` and reads only from `customers` and `products` created by `s1-01-data-model`.
 - **Security:** Raw client files (`data/raw/`) and exploration notebooks (`data/notebooks/`) remain git-ignored; database credentials are supplied at runtime via `--database-url` or environment configuration and never logged or committed.
 - **Observability:** Every run prints an auditable per-file accounting breakdown (`read = loaded + discarded + pending`), records applied data corrections per record (RN-16), and persists detailed failure reasons in `load_issues`.
-- **Documentation:** Adds `docs/adr/0003-pipeline-de-dados.md`, OpenSpec artifacts under `openspec/changes/s1-07-history-load/`, and (at closure) `docs/changes/s1-07-history-load.md`.
+- **Documentation:** Adds `docs/adr/0004-historical-data-pipeline.md`, OpenSpec artifacts under `openspec/changes/s1-07-history-load/`, and (at closure) `docs/changes/s1-07-history-load.md`.
 - **Dependencies:** Introduces a scoped Python 3.11+ virtual environment under `data/.venv/` with `pandas`, `openpyxl`, `psycopg[binary]`, and `pytest`; no Node.js runtime dependencies are added.

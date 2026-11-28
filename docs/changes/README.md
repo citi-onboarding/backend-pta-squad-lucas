@@ -28,11 +28,12 @@ to date as the change evolves.
 
 ## Index
 
-| Change ID                 | Title                         | Status      | Related ADRs |
-| ------------------------- | ----------------------------- | ----------- | ------------ |
-| create-backend-foundation | Create the backend foundation | shipped     | —            |
-| s1-02-erp-client          | ERP read client               | in-progress | ADR-0002     |
-| s1-03-erp-sync            | ERP synchronization           | in-progress | ADR-0003     |
+| Change ID                 | Title                                    | Status      | Related ADRs |
+| ------------------------- | ---------------------------------------- | ----------- | ------------ |
+| s1-07-history-load        | Historical spreadsheet cleaning and load | in-progress | ADR-0004     |
+| create-backend-foundation | Create the backend foundation            | shipped     | —            |
+| s1-02-erp-client          | ERP read client                          | in-progress | ADR-0002     |
+| s1-03-erp-sync            | ERP synchronization                      | in-progress | ADR-0003     |
 
 <!--
 Add one row per change doc.

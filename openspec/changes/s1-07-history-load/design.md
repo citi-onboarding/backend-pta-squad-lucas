@@ -21,7 +21,7 @@ See `proposal.md` for motivation and scope. The backend repository is primarily 
 ### D1: Python + pandas + psycopg in `data/` writing to backend PostgreSQL
 
 - **Choice:** Implement the ETL pipeline in Python 3.11+ (`pandas`, `openpyxl`, `psycopg[binary]`, `pytest`) under `data/` targeting the same PostgreSQL instance as the Node.js API.
-- **Rationale:** Matches downstream ML feature engineering (`s1-08-churn-features`) and Sprint 2 churn modeling while keeping a single database for the web portal, mobile app, and ML pipeline. Recorded durably in `docs/adr/0003-pipeline-de-dados.md`.
+- **Rationale:** Matches downstream ML feature engineering (`s1-08-churn-features`) and Sprint 2 churn modeling while keeping a single database for the web portal, mobile app, and ML pipeline. Recorded durably in `docs/adr/0004-historical-data-pipeline.md`.
 - **Alternatives rejected:** TypeScript/Node.js ETL (would split data tooling from Python ML workflows); separate SQLite/DuckDB database (would require extra synchronization to serve portal dashboards).
 
 ### D2: Clean-first, then deduplicate and reconcile by natural keys

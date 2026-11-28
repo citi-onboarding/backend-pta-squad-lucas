@@ -1,5 +1,5 @@
 ---
-title: ADR-0003
+title: ADR-0004
 status: proposed
 date: 2026-11-24
 owners:
@@ -13,7 +13,7 @@ supersedes: null
 superseded_by: null
 ---
 
-# 0003: Historical data ingestion pipeline in Python with pandas writing to backend PostgreSQL
+# 0004: Historical data ingestion pipeline in Python with pandas writing to backend PostgreSQL
 
 ## Context
 
