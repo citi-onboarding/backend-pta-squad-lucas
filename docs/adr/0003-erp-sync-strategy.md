@@ -18,7 +18,7 @@ reach the portal within 1 hour, and an outage or a quota limit must never lose, 
 duplicate data (RN-15). The call quota of the ERP is shared by the whole squad, and ADR 0002
 records how little is verified about the ERP.
 
-Implemented by the OpenSpec change `s1-03-erp-sync` (`openspec/changes/s1-03-erp-sync/`);
+Implemented by the OpenSpec change `s1-03-erp-sync` (`openspec/changes/archive/2026-11-27-s1-03-erp-sync/`);
 the change summary is `docs/changes/s1-03-erp-sync.md`.
 
 ### What is and is not known about the ERP (from ADR 0002 and this change)
@@ -269,7 +269,7 @@ Not selected: no users exist before F01 and matching touches the seller portfoli
 
 ## References
 
-- OpenSpec change: `openspec/changes/s1-03-erp-sync/` (specs `erp-sync`, `available-credit`,
+- OpenSpec change: `openspec/changes/archive/2026-11-27-s1-03-erp-sync/` (specs `erp-sync`, `available-credit`,
   `admin-access`, `design.md`, `tasks.md`).
 - Change summary: `docs/changes/s1-03-erp-sync.md`.
 - ADR 0002 (`docs/adr/0002-erp-api-access.md`): ERP client, retry policy, and unverified

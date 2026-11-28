@@ -15,15 +15,28 @@ import type { Environment } from "../shared/config/env.js";
 import type { Database } from "../shared/database/create-database.js";
 import { createOpenApiDocument } from "../shared/http/openapi.js";
 import { notFoundHandler, problemHandler } from "../shared/http/problem.js";
-import {
-  createBearerTokenRecognizer,
-  requireAdmin,
-} from "../shared/http/require-admin.js";
+import { createRoleGuard } from "../modules/authentication/role-guard.js";
 import { createLogger } from "../shared/logging/logger.js";
+import { hashPassword, verifyPassword } from "../shared/security/password.js";
+import { AuthenticationRepository } from "../modules/authentication/authentication.repository.js";
+import { createAuthenticationRouter } from "../modules/authentication/authentication.router.js";
+import { AuthenticationService } from "../modules/authentication/authentication.service.js";
+import {
+  createSessionToken,
+  digestSessionToken,
+} from "../modules/authentication/session-token.js";
 // <example-item-imports>
 import { ExampleItemRepository } from "../modules/example-items/example-item.repository.js";
 import { createExampleItemRouter } from "../modules/example-items/example-item.router.js";
 import { ExampleItemService } from "../modules/example-items/example-item.service.js";
+import {
+  createInvitationToken,
+  digestInvitationToken,
+} from "../modules/user-administration/invitation-token.js";
+import { createInvitationRouter } from "../modules/user-administration/invitation.router.js";
+import { UserAdministrationRepository } from "../modules/user-administration/user-administration.repository.js";
+import { createUserAdministrationRouter } from "../modules/user-administration/user-administration.router.js";
+import { UserAdministrationService } from "../modules/user-administration/user-administration.service.js";
 // </example-item-imports>
 
 interface CreateAppOptions {
@@ -98,6 +111,15 @@ export function createApp(options: CreateAppOptions): Express {
   );
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
+  const authenticationService = new AuthenticationService(
+    new AuthenticationRepository(database),
+    verifyPassword,
+    { generate: createSessionToken, digest: digestSessionToken },
+    () => new Date(),
+  );
+  app.use("/api/v1/auth", createAuthenticationRouter(authenticationService));
+  const requireRole = createRoleGuard(authenticationService);
+
   // <example-item-routes>
   const exampleItemService = new ExampleItemService(
     new ExampleItemRepository(database),
@@ -105,15 +127,32 @@ export function createApp(options: CreateAppOptions): Express {
   app.use("/api/v1/example-items", createExampleItemRouter(exampleItemService));
   // </example-item-routes>
 
-  // Administrator-only routes use the stopgap bearer token until login (F01) exists.
+  // Administrator-only routes require a session of a user with role ADMIN.
   app.use(
     "/api/v1/sync",
     createErpSyncRouter({
       service: options.erpSyncService,
-      adminGuard: requireAdmin(
-        createBearerTokenRecognizer(environment.ADMIN_API_TOKEN),
-      ),
+      adminGuard: requireRole("ADMIN"),
     }),
+  );
+
+  const userAdministrationService = new UserAdministrationService(
+    new UserAdministrationRepository(database),
+    { generate: createInvitationToken, digest: digestInvitationToken },
+    () => new Date(),
+    hashPassword,
+  );
+  app.use(
+    "/api/v1/users",
+    createUserAdministrationRouter({
+      service: userAdministrationService,
+      adminGuard: requireRole("ADMIN"),
+    }),
+  );
+  // Public: the invitation token in the body is the only credential.
+  app.use(
+    "/api/v1/invitations",
+    createInvitationRouter(userAdministrationService),
   );
 
   app.use(notFoundHandler);

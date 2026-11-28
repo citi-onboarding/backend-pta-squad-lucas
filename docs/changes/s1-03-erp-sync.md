@@ -5,7 +5,7 @@ status: in-progress
 owners: []
 tags: [erp, synchronization, resilience, credit, backend, sprint-1]
 related_adrs: [ADR-0003]
-openspec_change: openspec/changes/s1-03-erp-sync/
+openspec_change: openspec/changes/archive/2026-11-27-s1-03-erp-sync/
 ---
 
 # ERP synchronization and available credit
@@ -151,21 +151,25 @@ that the ERP filters by `atualizadoDesde`, and the web part (a separate task).
 
 ## Related artifacts
 
-- Proposal: `openspec/changes/s1-03-erp-sync/proposal.md`
-- Specifications: `openspec/changes/s1-03-erp-sync/specs/erp-sync/spec.md`,
-  `specs/available-credit/spec.md`, and `specs/admin-access/spec.md`
-- Design: `openspec/changes/s1-03-erp-sync/design.md`
-- Tasks: `openspec/changes/s1-03-erp-sync/tasks.md`
+- Proposal: `openspec/changes/archive/2026-11-27-s1-03-erp-sync/proposal.md`
+- Canonical specifications: `openspec/specs/erp-sync/spec.md`,
+  `openspec/specs/available-credit/spec.md`, and `openspec/specs/admin-access/spec.md`
+- Design: `openspec/changes/archive/2026-11-27-s1-03-erp-sync/design.md`
+- Tasks: `openspec/changes/archive/2026-11-27-s1-03-erp-sync/tasks.md` (archived with the web
+  task 6.5 still open)
 - ADR: `docs/adr/0003-erp-sync-strategy.md` (proposed); related ADRs `0001` and `0002`
 
 ## Usage
 
-- Set `ADMIN_API_TOKEN` (at least 32 random characters) in the ignored `.env` file. Keep
-  `ERP_SYNC_ENABLED=false` locally to save the shared ERP quota; set it to `true` (or leave it
-  unset) where the 30-minute schedule must run.
-- Start a run: `POST /api/v1/sync/run` with the header `Authorization: Bearer <token>`. It
-  answers `202`; read the outcome from `GET /api/v1/sync/runs` (same header), or open the
-  tables with `pnpm db:studio`.
+- Keep `ERP_SYNC_ENABLED=false` locally to save the shared ERP quota; set it to `true` (or
+  leave it unset) where the 30-minute schedule must run.
+- Access to the two run routes changed in [`s1-04-role-authorization`](s1-04-role-authorization.md):
+  sign in with a user whose role is `ADMIN` (`POST /api/v1/auth/login`) and send the session,
+  as the web cookie or as `Authorization: Bearer <credential>` from a `mobile` sign-in. The
+  other sections of this document describe the change as it was delivered.
+- Start a run: `POST /api/v1/sync/run`. It answers `202`; read the outcome from
+  `GET /api/v1/sync/runs`, or open the tables with `pnpm db:studio`. Without a valid session,
+  or with the legacy `ADMIN_API_TOKEN`, both routes answer `401`; another role gets `403`.
 - Show freshness: `GET /api/v1/sync/status` (no credentials) returns the last successful time,
   whether a run is in progress, and whether the ERP answered on the latest finished run.
 - Credit: call `getAvailableCreditCents(creditLimitCents, receivables)` from
