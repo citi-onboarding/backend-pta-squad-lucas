@@ -6,6 +6,7 @@ from datetime import date
 import json
 from pathlib import Path
 from typing import Any, Protocol
+import uuid
 
 import pandas as pd
 
@@ -231,42 +232,47 @@ class InMemoryHistoryStore:
 
 
 class PostgresHistoryStore:
-    """PostgreSQL idempotent store using psycopg UPSERTs (connects after S1-01 merge)."""
+    """PostgreSQL idempotent store aligned with s1-01-data-model snake_case schema."""
 
-    def __init__(self, conn: Any) -> None:
+    def __init__(self, conn: Any, run_id: str | None = None) -> None:
         self._conn = conn
+        self._run_id = run_id or str(uuid.uuid4())
 
     def upsert_order_item(self, item: HistoricalOrderItemRecord) -> None:
         with self._conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO "HistoricalOrderItem" (
-                    "orderNumber", "orderDate", "customerErpId", "sellerName",
-                    "productErpId", "description", "quantity", "unit",
-                    "unitPriceCents", "totalCents", "status", "corrections"
+                INSERT INTO historical_order_items (
+                    id, order_number, date, customer_code, seller_name,
+                    product_code, description, unit, quantity,
+                    unit_price_cents, total_cents, status, corrections
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT ("orderNumber", "productErpId") DO UPDATE SET
-                    "orderDate" = EXCLUDED."orderDate",
-                    "customerErpId" = EXCLUDED."customerErpId",
-                    "sellerName" = EXCLUDED."sellerName",
-                    "description" = EXCLUDED."description",
-                    "quantity" = EXCLUDED."quantity",
-                    "unit" = EXCLUDED."unit",
-                    "unitPriceCents" = EXCLUDED."unitPriceCents",
-                    "totalCents" = EXCLUDED."totalCents",
-                    "status" = EXCLUDED."status",
-                    "corrections" = EXCLUDED."corrections"
+                VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s::"HistoricalItemStatus", %s::jsonb
+                )
+                ON CONFLICT (order_number, product_code) DO UPDATE SET
+                    date = EXCLUDED.date,
+                    customer_code = EXCLUDED.customer_code,
+                    seller_name = EXCLUDED.seller_name,
+                    description = EXCLUDED.description,
+                    unit = EXCLUDED.unit,
+                    quantity = EXCLUDED.quantity,
+                    unit_price_cents = EXCLUDED.unit_price_cents,
+                    total_cents = EXCLUDED.total_cents,
+                    status = EXCLUDED.status,
+                    corrections = EXCLUDED.corrections
                 """,
                 (
-                    item.order_number,
+                    str(uuid.uuid4()),
+                    int(item.order_number),
                     item.order_date,
                     item.customer_erp_id,
-                    item.seller_name,
+                    item.seller_name or "",
                     item.product_erp_id,
                     item.description,
-                    item.quantity,
                     item.unit,
+                    item.quantity,
                     item.unit_price_cents,
                     item.total_cents,
                     item.status,
@@ -275,30 +281,38 @@ class PostgresHistoryStore:
             )
 
     def upsert_receivable(self, item: HistoricalReceivableRecord) -> None:
+        parsed_order = (
+            int(item.order_number)
+            if str(item.order_number).strip().isdigit()
+            else 0
+        )
         with self._conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO "HistoricalReceivable" (
-                    "titleNumber", "customerErpId", "orderNumber", "installment",
-                    "amountCents", "issueDate", "dueDate", "paymentDate",
-                    "status", "corrections"
+                INSERT INTO historical_receivables (
+                    id, title_id, customer_code, order_number, installment,
+                    amount_cents, issued_at, due_date, paid_at, status, corrections
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT ("titleNumber") DO UPDATE SET
-                    "customerErpId" = EXCLUDED."customerErpId",
-                    "orderNumber" = EXCLUDED."orderNumber",
-                    "installment" = EXCLUDED."installment",
-                    "amountCents" = EXCLUDED."amountCents",
-                    "issueDate" = EXCLUDED."issueDate",
-                    "dueDate" = EXCLUDED."dueDate",
-                    "paymentDate" = EXCLUDED."paymentDate",
-                    "status" = EXCLUDED."status",
-                    "corrections" = EXCLUDED."corrections"
+                VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s::"HistoricalReceivableStatus", %s::jsonb
+                )
+                ON CONFLICT (title_id) DO UPDATE SET
+                    customer_code = EXCLUDED.customer_code,
+                    order_number = EXCLUDED.order_number,
+                    installment = EXCLUDED.installment,
+                    amount_cents = EXCLUDED.amount_cents,
+                    issued_at = EXCLUDED.issued_at,
+                    due_date = EXCLUDED.due_date,
+                    paid_at = EXCLUDED.paid_at,
+                    status = EXCLUDED.status,
+                    corrections = EXCLUDED.corrections
                 """,
                 (
-                    item.title_number,
+                    str(uuid.uuid4()),
+                    int(item.title_number),
                     item.customer_erp_id,
-                    item.order_number,
+                    parsed_order,
                     item.installment,
                     item.amount_cents,
                     item.issue_date,
@@ -313,22 +327,41 @@ class PostgresHistoryStore:
         with self._conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO "LoadIssue" (
-                    "sourceFile", "rowNumber", "rawKey", "reason", "rawPayload"
+                INSERT INTO load_issues (
+                    id, run_id, source_file, row_number, problem_type,
+                    raw_value, resolution
                 )
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT ("sourceFile", "rowNumber", "reason") DO UPDATE SET
-                    "rawKey" = EXCLUDED."rawKey",
-                    "rawPayload" = EXCLUDED."rawPayload"
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (source_file, row_number, problem_type) DO UPDATE SET
+                    run_id = EXCLUDED.run_id,
+                    raw_value = EXCLUDED.raw_value,
+                    resolution = EXCLUDED.resolution
                 """,
                 (
+                    str(uuid.uuid4()),
+                    self._run_id,
                     issue.source_file,
                     issue.row_number,
-                    issue.raw_key,
                     issue.reason,
+                    issue.raw_key,
                     json.dumps(issue.raw_payload, ensure_ascii=False, default=str),
                 ),
             )
+
+    def counts(self) -> dict[str, int]:
+        """Return current persisted row counts across the three historical tables."""
+        with self._conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM historical_order_items")
+            order_items = int(cur.fetchone()[0])
+            cur.execute("SELECT COUNT(*) FROM historical_receivables")
+            receivables = int(cur.fetchone()[0])
+            cur.execute("SELECT COUNT(*) FROM load_issues")
+            issues = int(cur.fetchone()[0])
+        return {
+            "order_items": order_items,
+            "receivables": receivables,
+            "issues": issues,
+        }
 
 
 @dataclass
@@ -818,7 +851,10 @@ def load_raw_dataframes(raw_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.D
 def load_erp_catalog_from_postgres(conn: Any) -> ErpCatalog:
     with conn.cursor() as cur:
         cur.execute(
-            'SELECT "erpId", "name", "cnpj", "creditLimitCents", "status", "sellerId" FROM "Customer"'
+            """
+            SELECT erp_id, name, cnpj, credit_limit_cents, status::text, erp_seller_name
+            FROM customers
+            """
         )
         customers = [
             {
@@ -831,7 +867,7 @@ def load_erp_catalog_from_postgres(conn: Any) -> ErpCatalog:
             }
             for row in cur.fetchall()
         ]
-        cur.execute('SELECT "erpId", "name" FROM "Product"')
+        cur.execute("SELECT erp_id, description FROM products")
         products = [{"erp_id": row[0], "description": row[1]} for row in cur.fetchall()]
     return ErpCatalog.from_records(customers=customers, products=products)
 
@@ -909,6 +945,7 @@ def main() -> None:
         summary = run_pipeline(df_customers, df_orders, df_receivables, catalog, store)
         conn.commit()
         print_report(summary)
+        print(f"\nContagens persistidas no PostgreSQL: {store.counts()}")
 
 
 if __name__ == "__main__":
