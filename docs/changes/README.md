@@ -36,6 +36,7 @@ to date as the change evolves.
 | s1-04-user-authentication | User authentication (backend)       | in-progress | ADR-0004           |
 | s1-04-role-authorization  | Role authorization (sync routes)    | in-progress | ADR-0003, ADR-0004 |
 | s1-04-user-administration | User administration and invitations | in-progress | ADR-0005           |
+| s1-04-role-guard          | Role guard for any set of roles     | in-progress | ADR-0004           |
 
 <!--
 Add one row per change doc.

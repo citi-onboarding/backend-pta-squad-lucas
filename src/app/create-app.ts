@@ -15,7 +15,7 @@ import type { Environment } from "../shared/config/env.js";
 import type { Database } from "../shared/database/create-database.js";
 import { createOpenApiDocument } from "../shared/http/openapi.js";
 import { notFoundHandler, problemHandler } from "../shared/http/problem.js";
-import { createAdminSessionGuard } from "../modules/authentication/admin-session-guard.js";
+import { createRoleGuard } from "../modules/authentication/role-guard.js";
 import { createLogger } from "../shared/logging/logger.js";
 import { hashPassword, verifyPassword } from "../shared/security/password.js";
 import { AuthenticationRepository } from "../modules/authentication/authentication.repository.js";
@@ -118,6 +118,7 @@ export function createApp(options: CreateAppOptions): Express {
     () => new Date(),
   );
   app.use("/api/v1/auth", createAuthenticationRouter(authenticationService));
+  const requireRole = createRoleGuard(authenticationService);
 
   // <example-item-routes>
   const exampleItemService = new ExampleItemService(
@@ -131,7 +132,7 @@ export function createApp(options: CreateAppOptions): Express {
     "/api/v1/sync",
     createErpSyncRouter({
       service: options.erpSyncService,
-      adminGuard: createAdminSessionGuard(authenticationService),
+      adminGuard: requireRole("ADMIN"),
     }),
   );
 
@@ -145,7 +146,7 @@ export function createApp(options: CreateAppOptions): Express {
     "/api/v1/users",
     createUserAdministrationRouter({
       service: userAdministrationService,
-      adminGuard: createAdminSessionGuard(authenticationService),
+      adminGuard: requireRole("ADMIN"),
     }),
   );
   // Public: the invitation token in the body is the only credential.
