@@ -409,6 +409,7 @@ export const ModelName = {
   HistoricalOrderItem: 'HistoricalOrderItem',
   HistoricalReceivable: 'HistoricalReceivable',
   LoadIssue: 'LoadIssue',
+  ChurnFeature: 'ChurnFeature',
   ExampleItem: 'ExampleItem'
 } as const
 
@@ -425,7 +426,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "customer" | "product" | "receivable" | "syncRun" | "order" | "orderItem" | "contract" | "historicalOrderItem" | "historicalReceivable" | "loadIssue" | "exampleItem"
+    modelProps: "user" | "session" | "customer" | "product" | "receivable" | "syncRun" | "order" | "orderItem" | "contract" | "historicalOrderItem" | "historicalReceivable" | "loadIssue" | "churnFeature" | "exampleItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1317,6 +1318,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ChurnFeature: {
+      payload: Prisma.$ChurnFeaturePayload<ExtArgs>
+      fields: Prisma.ChurnFeatureFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ChurnFeatureFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ChurnFeatureFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>
+        }
+        findFirst: {
+          args: Prisma.ChurnFeatureFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ChurnFeatureFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>
+        }
+        findMany: {
+          args: Prisma.ChurnFeatureFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>[]
+        }
+        create: {
+          args: Prisma.ChurnFeatureCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>
+        }
+        createMany: {
+          args: Prisma.ChurnFeatureCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ChurnFeatureCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>[]
+        }
+        delete: {
+          args: Prisma.ChurnFeatureDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>
+        }
+        update: {
+          args: Prisma.ChurnFeatureUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>
+        }
+        deleteMany: {
+          args: Prisma.ChurnFeatureDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ChurnFeatureUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ChurnFeatureUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>[]
+        }
+        upsert: {
+          args: Prisma.ChurnFeatureUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChurnFeaturePayload>
+        }
+        aggregate: {
+          args: Prisma.ChurnFeatureAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateChurnFeature>
+        }
+        groupBy: {
+          args: Prisma.ChurnFeatureGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChurnFeatureGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ChurnFeatureCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChurnFeatureCountAggregateOutputType> | number
+        }
+      }
+    }
     ExampleItem: {
       payload: Prisma.$ExampleItemPayload<ExtArgs>
       fields: Prisma.ExampleItemFieldRefs
@@ -1621,6 +1696,24 @@ export const LoadIssueScalarFieldEnum = {
 } as const
 
 export type LoadIssueScalarFieldEnum = (typeof LoadIssueScalarFieldEnum)[keyof typeof LoadIssueScalarFieldEnum]
+
+
+export const ChurnFeatureScalarFieldEnum = {
+  id: 'id',
+  customerCode: 'customerCode',
+  month: 'month',
+  ordersLast3m: 'ordersLast3m',
+  revenueLast3mCents: 'revenueLast3mCents',
+  revenuePrev3mCents: 'revenuePrev3mCents',
+  daysSinceLastOrder: 'daysSinceLastOrder',
+  overdueReceivables: 'overdueReceivables',
+  segment: 'segment',
+  churned90d: 'churned90d',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChurnFeatureScalarFieldEnum = (typeof ChurnFeatureScalarFieldEnum)[keyof typeof ChurnFeatureScalarFieldEnum]
 
 
 export const ExampleItemScalarFieldEnum = {
@@ -2032,6 +2125,7 @@ export type GlobalOmitConfig = {
   historicalOrderItem?: Prisma.HistoricalOrderItemOmit
   historicalReceivable?: Prisma.HistoricalReceivableOmit
   loadIssue?: Prisma.LoadIssueOmit
+  churnFeature?: Prisma.ChurnFeatureOmit
   exampleItem?: Prisma.ExampleItemOmit
 }
 
