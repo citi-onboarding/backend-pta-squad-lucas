@@ -170,7 +170,9 @@ describe("test users from the prototype", () => {
     for (const user of await seededUsers()) {
       expect(user.passwordHash).not.toBe(plainPassword);
       expect(user.passwordHash).toMatch(/^\$2[aby]\$/);
-      expect(await verifyPassword(plainPassword, user.passwordHash)).toBe(true);
+      expect(await verifyPassword(plainPassword, user.passwordHash ?? "")).toBe(
+        true,
+      );
     }
   });
 

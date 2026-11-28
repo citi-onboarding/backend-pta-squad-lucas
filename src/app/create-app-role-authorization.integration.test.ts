@@ -264,3 +264,90 @@ describe.each(OPERATIONS)("administrator access to $name", (operation) => {
     expect(await latestSession()).toEqual(idleSession);
   });
 });
+
+const MISSING_USER_ID = "00000000-0000-4000-8000-000000000999";
+const USER_OPERATIONS = [
+  { name: "GET /users", method: "get", path: "/api/v1/users", body: undefined },
+  {
+    name: "POST /users",
+    method: "post",
+    path: "/api/v1/users",
+    body: {
+      name: "New Person",
+      email: "new.person@example.test",
+      role: "MANAGER",
+    },
+  },
+  {
+    name: "POST /users/{userId}/invitations",
+    method: "post",
+    path: `/api/v1/users/${MISSING_USER_ID}/invitations`,
+    body: undefined,
+  },
+  {
+    name: "GET /users/erp-seller-names",
+    method: "get",
+    path: "/api/v1/users/erp-seller-names",
+    body: undefined,
+  },
+] as const;
+
+describe.each(USER_OPERATIONS)("administrator access to $name", (operation) => {
+  function callUsers(authorization?: string) {
+    const pending = request(app)[operation.method](operation.path);
+    const withHeader = authorization
+      ? pending.set("Authorization", authorization)
+      : pending;
+    return operation.body ? withHeader.send(operation.body) : withHeader;
+  }
+
+  it("answers 401 with a challenge without a valid session", async () => {
+    const usersBefore = await testDatabase.database.user.count();
+
+    const results = [];
+    for (const authorization of [
+      undefined,
+      "Basic x",
+      `Bearer ${"A".repeat(43)}`,
+      `Bearer ${STATIC_TOKEN}`,
+    ]) {
+      const response = await callUsers(authorization);
+      results.push({
+        status: response.status,
+        challenge: response.headers["www-authenticate"],
+      });
+    }
+
+    expect(results).toEqual(
+      Array.from({ length: 4 }, () => ({ status: 401, challenge: "Bearer" })),
+    );
+    expect(await testDatabase.database.user.count()).toBe(usersBefore);
+  });
+
+  it.each(["SELLER", "MANAGER", "FINANCE"] as const)(
+    "forbids a %s session and creates nothing",
+    async (role) => {
+      const token = await signIn(role);
+      const usersBefore = await testDatabase.database.user.count();
+
+      const response = await callUsers(`Bearer ${token}`);
+
+      expect.soft(response.status).toBe(403);
+      expect.soft(response.type).toBe("application/problem+json");
+      expect(await testDatabase.database.user.count()).toBe(usersBefore);
+    },
+  );
+});
+
+describe("user administration with the session cookie", () => {
+  it("lists users for an ADMIN session sent only as the web cookie", async () => {
+    const cookie = await signInOnWeb();
+
+    const response = await request(app)
+      .get("/api/v1/users")
+      .set("Cookie", cookie);
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+});

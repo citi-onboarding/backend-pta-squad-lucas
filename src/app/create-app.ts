@@ -17,7 +17,7 @@ import { createOpenApiDocument } from "../shared/http/openapi.js";
 import { notFoundHandler, problemHandler } from "../shared/http/problem.js";
 import { createAdminSessionGuard } from "../modules/authentication/admin-session-guard.js";
 import { createLogger } from "../shared/logging/logger.js";
-import { verifyPassword } from "../shared/security/password.js";
+import { hashPassword, verifyPassword } from "../shared/security/password.js";
 import { AuthenticationRepository } from "../modules/authentication/authentication.repository.js";
 import { createAuthenticationRouter } from "../modules/authentication/authentication.router.js";
 import { AuthenticationService } from "../modules/authentication/authentication.service.js";
@@ -29,6 +29,14 @@ import {
 import { ExampleItemRepository } from "../modules/example-items/example-item.repository.js";
 import { createExampleItemRouter } from "../modules/example-items/example-item.router.js";
 import { ExampleItemService } from "../modules/example-items/example-item.service.js";
+import {
+  createInvitationToken,
+  digestInvitationToken,
+} from "../modules/user-administration/invitation-token.js";
+import { createInvitationRouter } from "../modules/user-administration/invitation.router.js";
+import { UserAdministrationRepository } from "../modules/user-administration/user-administration.repository.js";
+import { createUserAdministrationRouter } from "../modules/user-administration/user-administration.router.js";
+import { UserAdministrationService } from "../modules/user-administration/user-administration.service.js";
 // </example-item-imports>
 
 interface CreateAppOptions {
@@ -125,6 +133,25 @@ export function createApp(options: CreateAppOptions): Express {
       service: options.erpSyncService,
       adminGuard: createAdminSessionGuard(authenticationService),
     }),
+  );
+
+  const userAdministrationService = new UserAdministrationService(
+    new UserAdministrationRepository(database),
+    { generate: createInvitationToken, digest: digestInvitationToken },
+    () => new Date(),
+    hashPassword,
+  );
+  app.use(
+    "/api/v1/users",
+    createUserAdministrationRouter({
+      service: userAdministrationService,
+      adminGuard: createAdminSessionGuard(authenticationService),
+    }),
+  );
+  // Public: the invitation token in the body is the only credential.
+  app.use(
+    "/api/v1/invitations",
+    createInvitationRouter(userAdministrationService),
   );
 
   app.use(notFoundHandler);

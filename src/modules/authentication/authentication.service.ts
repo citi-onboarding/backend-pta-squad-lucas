@@ -7,7 +7,8 @@ const DUMMY_PASSWORD_HASH =
   "$2b$10$uhyW.2ogxKmvww11lP6HeuTKDMUskGCUdxkLsfFmgrGGAuQUAjV8a";
 
 export interface StoredUser extends SessionIdentity {
-  passwordHash: string;
+  // Null until the person accepts an invitation.
+  passwordHash: string | null;
 }
 
 export interface AuthenticationStore {
@@ -66,13 +67,14 @@ export class AuthenticationService {
   ) {}
 
   async signIn(email: string, password: string) {
-    const user = await this.store.findUserByEmail(email);
+    const user = await this.store.findUserByEmail(email.toLowerCase());
     const passwordMatches = await this.verifyPassword(
       password,
       user?.passwordHash ?? DUMMY_PASSWORD_HASH,
     );
-    // An absent user is always rejected, whatever the comparison returned.
-    if (!user || !passwordMatches) {
+    // An absent user, or one who has not set a password, is always rejected,
+    // whatever the comparison returned.
+    if (!user?.passwordHash || !passwordMatches) {
       throw invalidCredentials();
     }
     const accessToken = this.tokens.generate();

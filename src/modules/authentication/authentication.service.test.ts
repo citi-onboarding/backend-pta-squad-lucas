@@ -145,4 +145,79 @@ describe("authentication service sign-in", () => {
     expect(comparedHashes[0]).not.toBe(seller.passwordHash);
     expect(openedSessions()).toBe(0);
   });
+
+  it("signs in an uppercase variant of the registered email and returns the stored email", async () => {
+    const { service, openSessions } = createService();
+
+    const result = await service.signIn("SELLER@Example.Test", PASSWORD);
+
+    expect(result).toEqual({ user: identity, accessToken: "token-1" });
+    expect(result.user.email).toBe("seller@example.test");
+    expect([...openSessions]).toEqual([["digest-of-token-1", seller.id]]);
+  });
+
+  it("rejects an uppercase variant with a wrong password like an unknown email", async () => {
+    const { service, openedSessions, issuedTokens } = createService();
+
+    const unknownEmail = await rejectionOf(
+      service.signIn("nobody@example.test", PASSWORD),
+    );
+    const wrongPassword = await rejectionOf(
+      service.signIn("SELLER@EXAMPLE.TEST", "wrong-password"),
+    );
+
+    expect(wrongPassword).toMatchObject({
+      status: 401,
+      title: "Unauthorized",
+      message: "Email or password is incorrect.",
+      type: "about:blank",
+    });
+    expect(wrongPassword).toMatchObject({
+      status: (unknownEmail as { status: number }).status,
+      message: (unknownEmail as { message: string }).message,
+    });
+    expect(openedSessions()).toBe(0);
+    expect(issuedTokens()).toBe(0);
+  });
+
+  it("does not remove surrounding whitespace from the submitted email", async () => {
+    const { service, openedSessions, issuedTokens } = createService();
+
+    const padded = await rejectionOf(
+      service.signIn(` ${seller.email} `, PASSWORD),
+    );
+
+    expect(padded).toMatchObject({ status: 401 });
+    expect(openedSessions()).toBe(0);
+    expect(issuedTokens()).toBe(0);
+  });
+
+  it("rejects a user without a password whatever the comparison returns", async () => {
+    const invited: StoredUser = { ...seller, passwordHash: null };
+    const openSessions: string[] = [];
+    const service = new AuthenticationService(
+      {
+        findUserByEmail: () => Promise.resolve(invited),
+        openSession: (_userId, tokenDigest) => {
+          openSessions.push(tokenDigest);
+          return Promise.resolve();
+        },
+        renewActiveSession: () => Promise.resolve(null),
+        endActiveSession: () => Promise.resolve(false),
+      },
+      () => Promise.resolve(true),
+      { generate: () => "token-1", digest: (token) => `digest-of-${token}` },
+      () => new Date("2026-02-01T08:00:00.000Z"),
+    );
+
+    const rejection = await rejectionOf(service.signIn(seller.email, PASSWORD));
+
+    expect(rejection).toMatchObject({
+      status: 401,
+      title: "Unauthorized",
+      message: "Email or password is incorrect.",
+      type: "about:blank",
+    });
+    expect(openSessions).toEqual([]);
+  });
 });

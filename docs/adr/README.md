@@ -21,12 +21,13 @@ Skip it for routine implementation details, formatting choices, or a local and r
 
 ## Index
 
-| Number | Title                                                                               | Status   | Superseded by |
-| ------ | ----------------------------------------------------------------------------------- | -------- | ------------- |
-| 0001   | Sprint 1 data model                                                                 | Proposed | —             |
-| 0002   | [ERP API access contract, retry policy, and error handling](0002-erp-api-access.md) | Proposed | —             |
-| 0003   | [ERP synchronization strategy and run results](0003-erp-sync-strategy.md)           | Proposed | —             |
-| 0004   | Opaque session tokens for authentication, delivered per client                      | Proposed | —             |
+| Number | Title                                                                                                                                    | Status   | Superseded by |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------- |
+| 0001   | Sprint 1 data model                                                                                                                      | Proposed | —             |
+| 0002   | [ERP API access contract, retry policy, and error handling](0002-erp-api-access.md)                                                      | Proposed | —             |
+| 0003   | [ERP synchronization strategy and run results](0003-erp-sync-strategy.md)                                                                | Proposed | —             |
+| 0004   | Opaque session tokens for authentication, delivered per client                                                                           | Proposed | —             |
+| 0005   | [Account activation through invitations, with an optional password and a digest-only token](0005-invitation-based-account-activation.md) | Proposed | —             |
 
 <!--
 Add one row per ADR, newest first.

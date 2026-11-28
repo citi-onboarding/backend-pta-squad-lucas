@@ -436,7 +436,7 @@ describe("session rejection and identity with PostgreSQL", () => {
           DATABASE_URL: testDatabase.databaseUrl,
         }),
       );
-      const secrets = [SELLER_PASSWORD, user.passwordHash];
+      const secrets = [SELLER_PASSWORD, user.passwordHash ?? ""];
       captured.logs = "";
 
       for (const client of ["mobile", "web"] as const) {
@@ -751,6 +751,25 @@ describe("sign-in rules with PostgreSQL", () => {
       detail: expect.any(String),
       type: expect.any(String),
     });
+  });
+
+  it("signs in an uppercase variant of the stored email and returns the stored email", async () => {
+    const user = await createSellerFixture("case-variant");
+    const variant = user.email.toUpperCase();
+    expect(variant).not.toBe(user.email);
+
+    const response = await signInWith(mobileCredentials(variant));
+
+    expect(response.status).toBe(200);
+    expect(response.body.user).toMatchObject({
+      id: user.id,
+      email: user.email,
+    });
+    expect(
+      await testDatabase.database.session.count({
+        where: { userId: user.id, endedAt: null },
+      }),
+    ).toBe(1);
   });
 
   it.each([

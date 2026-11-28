@@ -1,10 +1,12 @@
 ## 1. SDD (specification)
 
-- [ ] 1.1 João reviews and accepts `proposal.md`, `specs/user-authentication/spec.md`, `design.md` and `docs/adr/0004-opaque-session-authentication.md` before any test is written.
+- [x] 1.1 João reviews and accepts `proposal.md`, `specs/user-authentication/spec.md`, `design.md` and `docs/adr/0004-opaque-session-authentication.md` before any test is written.
+  - Accepted by João on 2026-11-28, after the implementation, not before the first test as this task planned.
 - [x] 1.2 Run `./node_modules/.bin/openspec validate s1-04-user-authentication --strict --no-interactive` and confirm it passes.
 - [x] 1.3 Align with Benjamim the additive migration that adds the nullable, unique `token_digest` column to `sessions` (design, Migration Plan). Required before Green of cycle 1; not required for its Red.
   - João relayed Benjamim's answer: "benjamim confirmou que podemos criar". This authorizes F01 to create the new additive migration for an optional, unique `sessions.token_digest`.
-- [ ] 1.4 Record the product owner's decision on email letter-case and surrounding-whitespace variants (design, Pending Decisions). Not blocking: no cycle below asserts variant behavior; if a decision arrives, update the spec through `/openspec-update-change` before any test for it.
+- [x] 1.4 Record the product owner's decision on email letter-case and surrounding-whitespace variants (design, Pending Decisions). Not blocking: no cycle below asserts variant behavior; if a decision arrives, update the spec through `/openspec-update-change` before any test for it.
+  - Answered by `s1-04-user-administration` (João, 2026-11-28), in the delta `specs/user-authentication` of that change: the email is converted to lowercase at sign-in and at registration, and surrounding whitespace is not removed.
 
 ## Red rule for every cycle
 
